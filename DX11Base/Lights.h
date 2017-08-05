@@ -21,3 +21,13 @@ struct AmbientLight {
 		ambientColor = _ambientColor;
 	}
 };
+
+struct PointLight {
+	XMFLOAT4 diffuseColor;
+	XMFLOAT3 position;
+
+	void SetLightValues(XMFLOAT4 _diffuseColor, XMFLOAT3 _position) {
+		diffuseColor = _diffuseColor;
+		position = _position;
+	}
+};

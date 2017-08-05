@@ -54,18 +54,28 @@ private:
 
 	//Texture Shader Resource Views(SRVs)
 	ID3D11ShaderResourceView* earthDayMapSRV;
+	ID3D11ShaderResourceView* cobbleStoneSRV;
+	ID3D11ShaderResourceView* plainRedSRV;
+	ID3D11ShaderResourceView* plainYellowSRV;
 
 	//Normal Shader Resource Views(SRVs)
+	ID3D11ShaderResourceView* plainNormalMapSRV;
 	ID3D11ShaderResourceView* earthNormalMapSRV;
+	ID3D11ShaderResourceView* cobbleStoneNormalSRV;
 
 	//Mesh Class
 	Mesh* sphereMesh;
+	Mesh* cubeMesh;
 
 	//Material Class
 	Material* materialEarth;
+	Material* materialCobbleStone;
+	Material* materialRed;
+	Material* materialYellow;
 
 	//Game Entity Class
 	GameEntity* globeEntity;
+	GameEntity* flatEntity;
 
 	//Render Class
 	Render render;

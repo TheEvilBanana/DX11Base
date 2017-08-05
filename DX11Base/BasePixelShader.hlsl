@@ -12,9 +12,15 @@ struct AmbientLight {
 	float4 ambientColor;
 };
 
+struct PointLight {
+	float4 diffuseColor;
+	float3 position;
+};
+
 cbuffer ExternalData : register(b0) {
 	DirectionalLight dirLight_1;
 	AmbientLight ambientLight;
+	PointLight pointLight;
 };
 
 struct VertexToPixel
@@ -44,13 +50,15 @@ float4 main(VertexToPixel input) : SV_TARGET
 	float3x3 TBN = float3x3(T, B, N);
 	input.normal = normalize(mul(normalFromMap, TBN));
 
-	float4 lightAmount1 = saturate(dot(input.normal, -normalize(dirLight_1.direction)));
-
 	float4 surfaceColor = textureSRV.Sample(basicSampler, input.uv);
-	
-	return surfaceColor;
 
-	float4 totalLight = (dirLight_1.diffuseColor * lightAmount1 * surfaceColor) + (surfaceColor * ambientLight.ambientColor);
+	float4 lightAmountDL = saturate(dot(input.normal, -normalize(dirLight_1.direction)));
+
+	float3 dirToPointLight = normalize(pointLight.position - input.worldPos);
+	float lightAmountPL = saturate(dot(input.normal, dirToPointLight));
+
+	float4 totalLight = (dirLight_1.diffuseColor * lightAmountDL * surfaceColor) + (surfaceColor * ambientLight.ambientColor) +
+							(lightAmountPL * pointLight.diffuseColor);
 
 	return totalLight;
 }

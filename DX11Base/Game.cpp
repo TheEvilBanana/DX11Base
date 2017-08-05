@@ -32,15 +32,29 @@ Game::Game(HINSTANCE hInstance)
 Game::~Game()
 {
 	delete camera;
+
 	delete basePixelShader;
 	delete baseVertexShader;
+	
 	delete sphereMesh;
+	delete cubeMesh;
+
 	delete materialEarth;
+	delete materialCobbleStone;
+	delete materialRed;
+	delete materialYellow;
+
 	delete globeEntity;
+	delete flatEntity;
 
 	sampler->Release();
 	earthDayMapSRV->Release();
 	earthNormalMapSRV->Release();
+	cobbleStoneSRV->Release();
+	cobbleStoneNormalSRV->Release();
+	plainRedSRV->Release();
+	plainYellowSRV->Release();
+	plainNormalMapSRV->Release();
 }
 
 
@@ -80,12 +94,18 @@ void Game::ShadersInitialize()
 void Game::ModelsInitialize()
 {
 	sphereMesh = new Mesh("Models/sphere.obj", device);
+	cubeMesh = new Mesh("Models/cube.obj", device);
 }
 
 void Game::LoadTextures()
 {
 	CreateWICTextureFromFile(device, context, L"Textures/earth_daymap.jpg", 0, &earthDayMapSRV);
 	CreateWICTextureFromFile(device, context, L"Textures/earth_normal_map.tif", 0, &earthNormalMapSRV);
+	CreateWICTextureFromFile(device, context, L"Textures/rock.jpg", 0, &cobbleStoneSRV);
+	CreateWICTextureFromFile(device, context, L"Textures/rockNormals.jpg", 0, &cobbleStoneNormalSRV);
+	CreateWICTextureFromFile(device, context, L"Textures/red.jpg", 0, &plainRedSRV);
+	CreateWICTextureFromFile(device, context, L"Textures/yellow.jpg", 0, &plainYellowSRV);
+	CreateWICTextureFromFile(device, context, L"Textures/plainNormal.png", 0, &plainNormalMapSRV);
 }
 
 void Game::MaterialsInitialize()
@@ -102,12 +122,21 @@ void Game::MaterialsInitialize()
 
 
 	materialEarth = new Material(basePixelShader, baseVertexShader, earthDayMapSRV, earthNormalMapSRV, sampler);
-
+	materialCobbleStone = new Material(basePixelShader, baseVertexShader, cobbleStoneSRV, cobbleStoneNormalSRV, sampler);
+	materialRed = new Material(basePixelShader, baseVertexShader, plainRedSRV, plainNormalMapSRV, sampler);
+	materialYellow = new Material(basePixelShader, baseVertexShader, plainYellowSRV, plainNormalMapSRV, sampler);
 }
 
 void Game::GameEntityInitialize()
 {
 	globeEntity = new GameEntity(sphereMesh, materialEarth);
+	globeEntity->SetPosition(0, 1, 0);
+	//globeEntity->SetScale(2, 2, 2);
+
+	flatEntity = new GameEntity(cubeMesh, materialYellow);
+	flatEntity->SetPosition(0, -1, 0);
+	flatEntity->SetScale(5.0f, 0.01f, 5.0f);
+	
 }
 
 void Game::OnResize()
@@ -128,6 +157,7 @@ void Game::Update(float deltaTime, float totalTime)
 	globeEntity->Rotate(0, -deltaTime * 0.2f, 0);
 
 	globeEntity->UpdateWorldMatrix();
+	flatEntity->UpdateWorldMatrix();
 
 	if (GetAsyncKeyState(VK_ESCAPE))
 		Quit();
@@ -147,9 +177,10 @@ void Game::Draw(float deltaTime, float totalTime)
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
 
-	
+	render.RenderProcess(globeEntity, vertexBuffer, indexBuffer, baseVertexShader, basePixelShader, camera, context);
+	render.RenderProcess(flatEntity, vertexBuffer, indexBuffer, baseVertexShader, basePixelShader, camera, context);
 
-	render.SetVertexBuffer(globeEntity, vertexBuffer);
+	/*render.SetVertexBuffer(globeEntity, vertexBuffer);
 	render.SetIndexBuffer(globeEntity, indexBuffer);
 	render.SetVertexShader(baseVertexShader, globeEntity, camera);
 	render.SetPixelShader(basePixelShader, globeEntity, camera);
@@ -157,7 +188,7 @@ void Game::Draw(float deltaTime, float totalTime)
 	context->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
 	context->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
-	context->DrawIndexed(globeEntity->GetMesh()->GetIndexCount(), 0, 0);
+	context->DrawIndexed(globeEntity->GetMesh()->GetIndexCount(), 0, 0);*/
 
 	swapChain->Present(0, 0);
 }

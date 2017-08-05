@@ -39,6 +39,7 @@ void Render::SetPixelShader(SimplePixelShader* &pixelShader, GameEntity* &gameEn
 	pixelShader = gameEntity->GetMaterial()->GetPixelShader();
 
 	pixelShader->SetData("dirLight_1", &dirLight_1, sizeof(DirectionalLight));
+	pixelShader->SetData("ambientLight", &ambientLight, sizeof(AmbientLight));
 
 	pixelShader->SetShaderResourceView("textureSRV", gameEntity->GetMaterial()->GetMaterialSRV());
 	pixelShader->SetShaderResourceView("normalMapSRV", gameEntity->GetMaterial()->GetNormalSRV());
@@ -51,6 +52,9 @@ void Render::SetPixelShader(SimplePixelShader* &pixelShader, GameEntity* &gameEn
 void Render::RenderProcess(GameEntity* &gameEntity, ID3D11Buffer* &vertexBuffer, ID3D11Buffer* &indexBuffer, SimpleVertexShader* &vertexShader, SimplePixelShader* &pixelShader, Camera* &camera, ID3D11DeviceContext* &context)
 {
 	SetLights();
+	
+	UINT stride = sizeof(Vertex);
+	UINT offset = 0;
 
 	vertexBuffer = gameEntity->GetMesh()->GetVertexBuffer();
 
@@ -68,6 +72,7 @@ void Render::RenderProcess(GameEntity* &gameEntity, ID3D11Buffer* &vertexBuffer,
 
 	pixelShader->SetData("dirLight_1", &dirLight_1, sizeof(DirectionalLight));
 	pixelShader->SetData("ambientLight", &ambientLight, sizeof(AmbientLight));
+	pixelShader->SetData("pointLight", &pointLight, sizeof(PointLight));
 
 	pixelShader->SetShaderResourceView("textureSRV", gameEntity->GetMaterial()->GetMaterialSRV());
 	pixelShader->SetShaderResourceView("normalMapSRV", gameEntity->GetMaterial()->GetNormalSRV());
@@ -75,10 +80,16 @@ void Render::RenderProcess(GameEntity* &gameEntity, ID3D11Buffer* &vertexBuffer,
 
 	pixelShader->CopyAllBufferData();
 	pixelShader->SetShader();
+
+	context->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
+	context->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);
+
+	context->DrawIndexed(gameEntity->GetMesh()->GetIndexCount(), 0, 0);
 }
 
 void Render::SetLights()
 {
-	dirLight_1.SetLightValues(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(10.0f, 0.0f, 0.0f));
-	ambientLight.SetLightValues(XMFLOAT4(1.0f, 0.0f, 0.0f, 0.5f));
+	dirLight_1.SetLightValues(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(10.0f, -5.0f, 0.0f));
+	ambientLight.SetLightValues(XMFLOAT4(0.2f, 0.0f, 0.0f, 1.0f));
+	pointLight.SetLightValues(XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f), XMFLOAT3(1.0f, 2.0f, -1.0f));
 }
