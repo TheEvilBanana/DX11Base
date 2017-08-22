@@ -23,5 +23,6 @@ private:
 	DirectionalLight dirLight_1;
 	AmbientLight ambientLight;
 	PointLight pointLight;
+	SpotLight spotLight;
 };
 

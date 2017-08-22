@@ -73,6 +73,8 @@ void Render::RenderProcess(GameEntity* &gameEntity, ID3D11Buffer* &vertexBuffer,
 	pixelShader->SetData("dirLight_1", &dirLight_1, sizeof(DirectionalLight));
 	pixelShader->SetData("ambientLight", &ambientLight, sizeof(AmbientLight));
 	pixelShader->SetData("pointLight", &pointLight, sizeof(PointLight));
+	pixelShader->SetData("spotLight", &spotLight, sizeof(SpotLight));
+	pixelShader->SetFloat3("cameraPosition", camera->GetPosition());
 
 	pixelShader->SetShaderResourceView("textureSRV", gameEntity->GetMaterial()->GetMaterialSRV());
 	pixelShader->SetShaderResourceView("normalMapSRV", gameEntity->GetMaterial()->GetNormalSRV());
@@ -91,5 +93,7 @@ void Render::SetLights()
 {
 	dirLight_1.SetLightValues(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(10.0f, -5.0f, 0.0f));
 	ambientLight.SetLightValues(XMFLOAT4(0.2f, 0.0f, 0.0f, 1.0f));
-	pointLight.SetLightValues(XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f), XMFLOAT3(1.0f, 2.0f, -1.0f));
+	pointLight.SetLightValues(XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f), XMFLOAT3(2.0f, 0.0f, 0.0f), 10.0f, XMFLOAT3(0.0f, 1.0f, 0.0f), 0.0f);
+	spotLight.SetLightValues(XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f), XMFLOAT3(0.0f, -0.5f, 0.0f), 10.0f, XMFLOAT3(0.0f, -1.0f, 0.0f), 1.0f, 
+									XMFLOAT3(0.0f, 1.0f, 0.0f), 0.0f);
 }

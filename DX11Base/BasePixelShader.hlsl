@@ -15,12 +15,27 @@ struct AmbientLight {
 struct PointLight {
 	float4 diffuseColor;
 	float3 position;
+	float range;
+	float3 attenuate;
+	float pad;
+};
+
+struct SpotLight {
+	float4 diffuseColor;
+	float3 position;
+	float range;
+	float3 direction;
+	float spot;
+	float3 attenuate;
+	float pad;
 };
 
 cbuffer ExternalData : register(b0) {
 	DirectionalLight dirLight_1;
 	AmbientLight ambientLight;
 	PointLight pointLight;
+	SpotLight spotLight;
+	float3 cameraPosition;
 };
 
 struct VertexToPixel
@@ -51,14 +66,54 @@ float4 main(VertexToPixel input) : SV_TARGET
 	input.normal = normalize(mul(normalFromMap, TBN));
 
 	float4 surfaceColor = textureSRV.Sample(basicSampler, input.uv);
+	//float4 diffuse = float4(0.0f, 0.0f, 0.0f, 0.0f);
+	float4 specularTotal = float4(0.0f, 0.0f, 0.0f, 0.0f);
+	//Directional light
+	float lightAmountDL = saturate(dot(input.normal, -normalize(dirLight_1.direction)));
+	float4 directionalL = dirLight_1.diffuseColor * lightAmountDL * surfaceColor;
+	
+	//diffuse += directionalL;
+	//Ambient light
+	float4 ambientL = surfaceColor * ambientLight.ambientColor;
 
-	float4 lightAmountDL = saturate(dot(input.normal, -normalize(dirLight_1.direction)));
-
-	float3 dirToPointLight = normalize(pointLight.position - input.worldPos);
+	//Point light
+	//float3 dirToPointLight = normalize(pointLight.position - input.worldPos);
+	float3 dirToPointLight = pointLight.position - input.worldPos;
+	float dist = length(dirToPointLight);
+	dirToPointLight /= dist;
 	float lightAmountPL = saturate(dot(input.normal, dirToPointLight));
+	float4 pointL = lightAmountPL * pointLight.diffuseColor;
+	float att = 1.0f/dot(pointLight.attenuate, float3(1.0f, dist, dist*dist));
+	pointL *= att;
+	//Point specular
+	float3 toCamera = normalize(cameraPosition - input.worldPos);
+	float3 refl = reflect(-dirToPointLight, input.normal);
+	float specular = pow(saturate(dot(refl, toCamera)), 8);
+	specular *= att;
+	//diffuse += pointL;
 
-	float4 totalLight = (dirLight_1.diffuseColor * lightAmountDL * surfaceColor) + (surfaceColor * ambientLight.ambientColor) +
-							(lightAmountPL * pointLight.diffuseColor);
+	/*if (dist > pointLight.range)
+	{
+		pointL = (0.0f, 0.0f, 0.0f, 0.0f);
+	}*/
+
+	//Spot light
+	float3 dirToSpotLight = spotLight.position - input.worldPos;
+	float distSL = length(dirToSpotLight);
+	dirToSpotLight /= distSL;
+	float lightAmountSL = saturate(dot(input.normal, dirToSpotLight));
+	float4 spotL = lightAmountSL * spotLight.diffuseColor;
+	float spot = pow(max(dot(-dirToSpotLight, spotLight.direction), 0.0f), spotLight.spot);
+	float attSL = spot/dot(spotLight.attenuate, float3(1.0f, distSL, distSL*distSL));
+	spotL *= attSL;
+	//Spot specular
+	float3 toCameraSL = normalize(cameraPosition - input.worldPos);
+	float3 reflSL = reflect(-dirToSpotLight, input.normal);
+	float specularSL = pow(saturate(dot(reflSL, toCameraSL)), 8);
+	specularSL *= attSL;
+	//Total light
+	float4 totalLight = directionalL + ambientL + pointL + spotL + specular + specularSL;
+	//float4 totalLight = diffuse + ambientL;
 
 	return totalLight;
 }
