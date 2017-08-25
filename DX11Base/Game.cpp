@@ -1,6 +1,7 @@
 #include "Game.h"
 
 #include "WICTextureLoader.h"
+#include "DDSTextureLoader.h"
 
 #define max(a,b) (((a) > (b)) ? (a):(b))
 #define min(a,b) (((a) < (b)) ? (a):(b))
@@ -35,7 +36,9 @@ Game::~Game()
 
 	delete basePixelShader;
 	delete baseVertexShader;
-	
+	delete skyVertexShader;
+	delete skyPixelShader;
+
 	delete sphereMesh;
 	delete cubeMesh;
 
@@ -43,11 +46,17 @@ Game::~Game()
 	delete materialCobbleStone;
 	delete materialRed;
 	delete materialYellow;
+	delete materialSkyBox;
 
+	delete skyBoxEntity;
 	delete globeEntity;
 	delete flatEntity;
+	
+	skyDepthState->Release();
+	skyRasterizerState->Release();
 
 	sampler->Release();
+	
 	earthDayMapSRV->Release();
 	earthNormalMapSRV->Release();
 	cobbleStoneSRV->Release();
@@ -55,6 +64,10 @@ Game::~Game()
 	plainRedSRV->Release();
 	plainYellowSRV->Release();
 	plainNormalMapSRV->Release();
+	skySRV->Release();
+	
+
+
 }
 
 
@@ -66,6 +79,7 @@ void Game::Init()
 	ModelsInitialize();
 	LoadTextures();
 	MaterialsInitialize();
+	SkyBoxInitialize();
 	GameEntityInitialize();
 
 	// Tell the input assembler stage of the pipeline what kind of
@@ -89,6 +103,14 @@ void Game::ShadersInitialize()
 	basePixelShader = new SimplePixelShader(device, context);
 	if (!basePixelShader->LoadShaderFile(L"Debug/BasePixelShader.cso"))
 		basePixelShader->LoadShaderFile(L"BasePixelShader.cso");
+
+	skyVertexShader = new SimpleVertexShader(device, context);
+	if (!skyVertexShader->LoadShaderFile(L"Debug/SkyBoxVertexShader.cso"))
+		skyVertexShader->LoadShaderFile(L"SkyBoxVertexShader.cso");
+
+	skyPixelShader = new SimplePixelShader(device, context);
+	if (!skyPixelShader->LoadShaderFile(L"Debug/SkyBoxPixelShader.cso"))
+		skyPixelShader->LoadShaderFile(L"SkyBoxPixelShader.cso");
 }
 
 void Game::ModelsInitialize()
@@ -125,10 +147,30 @@ void Game::MaterialsInitialize()
 	materialCobbleStone = new Material(basePixelShader, baseVertexShader, cobbleStoneSRV, cobbleStoneNormalSRV, sampler);
 	materialRed = new Material(basePixelShader, baseVertexShader, plainRedSRV, plainNormalMapSRV, sampler);
 	materialYellow = new Material(basePixelShader, baseVertexShader, plainYellowSRV, plainNormalMapSRV, sampler);
+	materialSkyBox = new Material(skyPixelShader, skyVertexShader, skySRV, plainNormalMapSRV, sampler);
+}
+
+void Game::SkyBoxInitialize()
+{
+	CreateDDSTextureFromFile(device, L"Textures/SunnyCubeMap.dds", 0, &skySRV);
+
+	D3D11_RASTERIZER_DESC rasterizerDesc = {};
+	rasterizerDesc.FillMode = D3D11_FILL_SOLID;
+	rasterizerDesc.CullMode = D3D11_CULL_FRONT;
+	rasterizerDesc.DepthClipEnable = true;
+	device->CreateRasterizerState(&rasterizerDesc, &skyRasterizerState);
+
+	D3D11_DEPTH_STENCIL_DESC depthStencilDesc = {};
+	depthStencilDesc.DepthEnable = true;
+	depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+	depthStencilDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
+	device->CreateDepthStencilState(&depthStencilDesc, &skyDepthState);
 }
 
 void Game::GameEntityInitialize()
 {
+	skyBoxEntity = new GameEntity(cubeMesh, materialSkyBox);
+
 	globeEntity = new GameEntity(sphereMesh, materialEarth);
 	globeEntity->SetPosition(0, 1, 0);
 	//globeEntity->SetScale(2, 2, 2);
@@ -174,22 +216,15 @@ void Game::Draw(float deltaTime, float totalTime)
 	context->ClearRenderTargetView(backBufferRTV, color);
 	context->ClearDepthStencilView(depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
-	UINT stride = sizeof(Vertex);
-	UINT offset = 0;
+
+	//render.RenderShadowMap(shadowVertexShader, shadowDepthStencil, shadowRasterizer, context, globeEntity, flatEntity, vertexBuffer, indexBuffer, this->backBufferRTV, this->depthStencilView, shadowMapSize, this->width, this->height, shadowViewMatrix, shadowProjectionMatrix);
+	
 
 	render.RenderProcess(globeEntity, vertexBuffer, indexBuffer, baseVertexShader, basePixelShader, camera, context);
 	render.RenderProcess(flatEntity, vertexBuffer, indexBuffer, baseVertexShader, basePixelShader, camera, context);
 
-	/*render.SetVertexBuffer(globeEntity, vertexBuffer);
-	render.SetIndexBuffer(globeEntity, indexBuffer);
-	render.SetVertexShader(baseVertexShader, globeEntity, camera);
-	render.SetPixelShader(basePixelShader, globeEntity, camera);
-
-	context->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
-	context->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);
-
-	context->DrawIndexed(globeEntity->GetMesh()->GetIndexCount(), 0, 0);*/
-
+	render.RenderSkyBox(cubeMesh, vertexBuffer, indexBuffer, skyVertexShader, skyPixelShader, camera, context, skyRasterizerState, skyDepthState, skySRV);
+	
 	swapChain->Present(0, 0);
 }
 

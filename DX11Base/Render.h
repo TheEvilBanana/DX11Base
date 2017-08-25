@@ -10,13 +10,13 @@ public:
 	Render();
 	~Render();
 
-	void SetVertexBuffer(GameEntity* &gameEntity, ID3D11Buffer* &vertexBuffer);
-	void SetIndexBuffer(GameEntity* &gameEntity, ID3D11Buffer* &indexBuffer);
-	void SetVertexShader(SimpleVertexShader* &vertexShader, GameEntity* &gameEntity, Camera* &camera);
-	void SetPixelShader(SimplePixelShader* &pixelShader, GameEntity* &gameEntity, Camera* &camera);
 	void RenderProcess(GameEntity* &gameEntity, ID3D11Buffer* &vertexBuffer, ID3D11Buffer* &indexBuffer, SimpleVertexShader* &vertexShader, SimplePixelShader* &pixelShader, Camera* &camera, ID3D11DeviceContext* &context);
+	void RenderSkyBox(Mesh* &mesh, ID3D11Buffer* &vertexBuffer, ID3D11Buffer* &indexBuffer, SimpleVertexShader* &vertexShader, SimplePixelShader* &pixelShader, Camera* &camera, ID3D11DeviceContext* &context, ID3D11RasterizerState* &rasterizerState, ID3D11DepthStencilState* &depthState, ID3D11ShaderResourceView* &SRV);
 
 private:
+	
+	UINT stride = sizeof(Vertex);
+	UINT offset = 0;
 
 	void SetLights();
 

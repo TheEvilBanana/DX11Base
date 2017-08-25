@@ -1,6 +1,7 @@
 
 Texture2D textureSRV : register(t0);
 Texture2D normalMapSRV : register(t1);
+
 SamplerState basicSampler : register(s0);
 
 struct DirectionalLight {
@@ -111,9 +112,8 @@ float4 main(VertexToPixel input) : SV_TARGET
 	float3 reflSL = reflect(-dirToSpotLight, input.normal);
 	float specularSL = pow(saturate(dot(reflSL, toCameraSL)), 8);
 	specularSL *= attSL;
+	
 	//Total light
 	float4 totalLight = directionalL + ambientL + pointL + spotL + specular + specularSL;
-	//float4 totalLight = diffuse + ambientL;
-
 	return totalLight;
 }

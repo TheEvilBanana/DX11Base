@@ -38,6 +38,7 @@ private:
 	void ModelsInitialize();
 	void LoadTextures();
 	void MaterialsInitialize();
+	void SkyBoxInitialize();
 	void GameEntityInitialize();
 
 	// Buffers to hold actual geometry data
@@ -48,6 +49,9 @@ private:
 	//Declare shader variables
 	SimpleVertexShader* baseVertexShader;
 	SimplePixelShader* basePixelShader;
+	SimpleVertexShader* skyVertexShader;
+	SimplePixelShader* skyPixelShader;
+	SimpleVertexShader* shadowVertexShader;
 
 	// Sampler for wrapping textures
 	ID3D11SamplerState* sampler;
@@ -63,6 +67,11 @@ private:
 	ID3D11ShaderResourceView* earthNormalMapSRV;
 	ID3D11ShaderResourceView* cobbleStoneNormalSRV;
 
+	//Sky Box Stuff
+	ID3D11ShaderResourceView* skySRV;
+	ID3D11RasterizerState* skyRasterizerState;
+	ID3D11DepthStencilState* skyDepthState;
+
 	//Mesh Class
 	Mesh* sphereMesh;
 	Mesh* cubeMesh;
@@ -72,8 +81,10 @@ private:
 	Material* materialCobbleStone;
 	Material* materialRed;
 	Material* materialYellow;
+	Material* materialSkyBox;
 
 	//Game Entity Class
+	GameEntity* skyBoxEntity;
 	GameEntity* globeEntity;
 	GameEntity* flatEntity;
 

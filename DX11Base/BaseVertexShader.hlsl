@@ -4,6 +4,9 @@ cbuffer externalData : register(b0)
 	matrix world;
 	matrix view;
 	matrix projection;
+
+	matrix shadowView;
+	matrix shadowProj;
 };
 
 // Struct representing a single vertex worth of data
