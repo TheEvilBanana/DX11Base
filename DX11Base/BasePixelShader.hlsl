@@ -34,7 +34,10 @@ struct SpotLight {
 cbuffer ExternalData : register(b0) {
 	DirectionalLight dirLight_1;
 	AmbientLight ambientLight;
-	PointLight pointLight;
+	PointLight pointLight1;
+	PointLight pointLight2;
+	PointLight pointLight3;
+	PointLight pointLight4;
 	SpotLight spotLight;
 	float3 cameraPosition;
 };
@@ -80,7 +83,7 @@ void ComputePointLight(VertexToPixel input, PointLight pointLight, float4 surfac
 	//Point specular
 	float3 toCamera = normalize(cameraPosition - input.worldPos);
 	float3 refl = reflect(-dirToPointLight, input.normal);
-	float specularPL = pow(saturate(dot(refl, toCamera)), 8);
+	float specularPL = pow(saturate(dot(refl, toCamera)), 20);
 	specular *= att;
 	diffuse = pointL;
 	specular = specularPL;
@@ -101,7 +104,7 @@ void ComputeSpotLight(VertexToPixel input, SpotLight spotLight, float4 surfaceCo
 	//Spot specular
 	float3 toCameraSL = normalize(cameraPosition - input.worldPos);
 	float3 reflSL = reflect(-dirToSpotLight, input.normal);
-	float specularSL = pow(saturate(dot(reflSL, toCameraSL)), 8);
+	float specularSL = pow(saturate(dot(reflSL, toCameraSL)), 20);
 	specularSL *= attSL;
 	specular = specularSL;
 }
@@ -128,12 +131,8 @@ float4 main(VertexToPixel input) : SV_TARGET
 	float4 surfaceColor = textureSRV.Sample(basicSampler, input.uv);
 	float4 diffuse = float4(0.0f, 0.0f, 0.0f, 0.0f);
 	float4 specular = float4(0.0f, 0.0f, 0.0f, 0.0f);
-	//Directional light
-	/*float lightAmountDL = saturate(dot(input.normal, -normalize(dirLight_1.direction)));
-	float4 directionalL = dirLight_1.diffuseColor * lightAmountDL * surfaceColor;
 	
-	diffuse += directionalL;*/
-
+	//Directional light
 	ComputeDirectionalLight(input, dirLight_1, surfaceColor, D);
 	diffuse += D;
 	
@@ -141,7 +140,20 @@ float4 main(VertexToPixel input) : SV_TARGET
 	float4 ambient = surfaceColor * ambientLight.ambientColor;
 
 	//Point light
-	ComputePointLight(input, pointLight, surfaceColor, D, S);
+	//point light 1
+	ComputePointLight(input, pointLight1, surfaceColor, D, S);
+	diffuse += D;
+	specular += S;
+	//point light 2
+	ComputePointLight(input, pointLight2, surfaceColor, D, S);
+	diffuse += D;
+	specular += S;
+	//point light 3
+	ComputePointLight(input, pointLight3, surfaceColor, D, S);
+	diffuse += D;
+	specular += S;
+	//point light 4
+	ComputePointLight(input, pointLight4, surfaceColor, D, S);
 	diffuse += D;
 	specular += S;
 
