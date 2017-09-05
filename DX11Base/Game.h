@@ -59,6 +59,7 @@ private:
 	//Texture Shader Resource Views(SRVs)
 	ID3D11ShaderResourceView* earthDayMapSRV;
 	ID3D11ShaderResourceView* cobbleStoneSRV;
+	ID3D11ShaderResourceView* snowTracksSRV;
 	ID3D11ShaderResourceView* plainRedSRV;
 	ID3D11ShaderResourceView* plainYellowSRV;
 
@@ -66,6 +67,7 @@ private:
 	ID3D11ShaderResourceView* plainNormalMapSRV;
 	ID3D11ShaderResourceView* earthNormalMapSRV;
 	ID3D11ShaderResourceView* cobbleStoneNormalSRV;
+	ID3D11ShaderResourceView* snowTracksNormalSRV;
 
 	//Sky Box Stuff
 	ID3D11ShaderResourceView* skySRV;
@@ -82,11 +84,12 @@ private:
 	Material* materialRed;
 	Material* materialYellow;
 	Material* materialSkyBox;
-
+	Material* materialSnowTracks;
 	//Game Entity Class
 	GameEntity* skyBoxEntity;
 	GameEntity* globeEntity;
 	GameEntity* flatEntity;
+	std::vector<GameEntity*> sphereEntities;
 
 	//Render Class
 	Render render;

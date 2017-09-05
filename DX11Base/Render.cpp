@@ -78,7 +78,7 @@ void Render::SetLights()
 {
 	dirLight_1.SetLightValues(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(10.0f, 0.0f, 0.0f));
 	ambientLight.SetLightValues(XMFLOAT4(0.2f, 0.0f, 0.0f, 1.0f));
-	pointLight.SetLightValues(XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f), XMFLOAT3(2.0f, 0.0f, 0.0f), 10.0f, XMFLOAT3(0.0f, 1.0f, 0.0f), 0.0f);
-	spotLight.SetLightValues(XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f), XMFLOAT3(0.0f, -0.5f, 0.0f), 10.0f, XMFLOAT3(0.0f, -1.0f, 0.0f), 1.0f, 
+	pointLight.SetLightValues(XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f), XMFLOAT3(2.0f, 0.0f, 0.0f), 7.0f, XMFLOAT3(0.0f, 1.0f, 0.0f), 0.0f);
+	spotLight.SetLightValues(XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f), 10.0f, XMFLOAT3(0.0f, -1.0f, 0.0f), 5.0f, 
 									XMFLOAT3(0.0f, 1.0f, 0.0f), 0.0f);
 }

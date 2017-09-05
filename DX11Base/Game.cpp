@@ -47,10 +47,11 @@ Game::~Game()
 	delete materialRed;
 	delete materialYellow;
 	delete materialSkyBox;
+	delete materialSnowTracks;
 
 	delete skyBoxEntity;
-	delete globeEntity;
 	delete flatEntity;
+	for(auto& se: sphereEntities) delete se;
 	
 	skyDepthState->Release();
 	skyRasterizerState->Release();
@@ -64,6 +65,9 @@ Game::~Game()
 	plainRedSRV->Release();
 	plainYellowSRV->Release();
 	plainNormalMapSRV->Release();
+	snowTracksSRV->Release();
+	snowTracksNormalSRV->Release();
+
 	skySRV->Release();
 	
 
@@ -128,6 +132,8 @@ void Game::LoadTextures()
 	CreateWICTextureFromFile(device, context, L"Textures/red.jpg", 0, &plainRedSRV);
 	CreateWICTextureFromFile(device, context, L"Textures/yellow.jpg", 0, &plainYellowSRV);
 	CreateWICTextureFromFile(device, context, L"Textures/plainNormal.png", 0, &plainNormalMapSRV);
+	CreateWICTextureFromFile(device, context, L"Textures/snowTracks.tif", 0, &snowTracksSRV);
+	CreateWICTextureFromFile(device, context, L"Textures/snowTracksNormal.tif", 0, &snowTracksNormalSRV);
 }
 
 void Game::MaterialsInitialize()
@@ -147,7 +153,10 @@ void Game::MaterialsInitialize()
 	materialCobbleStone = new Material(basePixelShader, baseVertexShader, cobbleStoneSRV, cobbleStoneNormalSRV, sampler);
 	materialRed = new Material(basePixelShader, baseVertexShader, plainRedSRV, plainNormalMapSRV, sampler);
 	materialYellow = new Material(basePixelShader, baseVertexShader, plainYellowSRV, plainNormalMapSRV, sampler);
+	materialSnowTracks = new Material(basePixelShader, baseVertexShader, snowTracksSRV, snowTracksNormalSRV, sampler);
+	
 	materialSkyBox = new Material(skyPixelShader, skyVertexShader, skySRV, plainNormalMapSRV, sampler);
+	
 }
 
 void Game::SkyBoxInitialize()
@@ -170,13 +179,40 @@ void Game::SkyBoxInitialize()
 void Game::GameEntityInitialize()
 {
 	skyBoxEntity = new GameEntity(cubeMesh, materialSkyBox);
+	
+	GameEntity* sphere0 = new GameEntity(sphereMesh, materialCobbleStone);
+	GameEntity* sphere1 = new GameEntity(sphereMesh, materialCobbleStone);
+	GameEntity* sphere2 = new GameEntity(sphereMesh, materialCobbleStone);
+	GameEntity* sphere3 = new GameEntity(sphereMesh, materialCobbleStone);
+	GameEntity* sphere4 = new GameEntity(sphereMesh, materialCobbleStone);
+	GameEntity* sphere5 = new GameEntity(sphereMesh, materialCobbleStone);
+	GameEntity* sphere6 = new GameEntity(sphereMesh, materialCobbleStone);
+	GameEntity* sphere7 = new GameEntity(sphereMesh, materialCobbleStone);
+	GameEntity* sphere8 = new GameEntity(sphereMesh, materialCobbleStone);
 
-	globeEntity = new GameEntity(sphereMesh, materialEarth);
-	globeEntity->SetPosition(0, 1, 0);
-	//globeEntity->SetScale(2, 2, 2);
+	sphereEntities.push_back(sphere0);
+	sphereEntities.push_back(sphere1);
+	sphereEntities.push_back(sphere2);
+	sphereEntities.push_back(sphere3);
+	sphereEntities.push_back(sphere4);
+	sphereEntities.push_back(sphere5);
+	sphereEntities.push_back(sphere6);
+	sphereEntities.push_back(sphere7);
+	sphereEntities.push_back(sphere8);
+
+	sphereEntities[0]->SetPosition(0, 0, 2);
+	sphereEntities[1]->SetPosition(2, 0, 2);
+	sphereEntities[2]->SetPosition(-2, 0, 2);
+	sphereEntities[3]->SetPosition(0, 0, 0);
+	sphereEntities[4]->SetPosition(2, 0, 0);
+	sphereEntities[5]->SetPosition(-2, 0, 0);
+	sphereEntities[6]->SetPosition(0, 0, -2);
+	sphereEntities[7]->SetPosition(2, 0, -2);
+	sphereEntities[8]->SetPosition(-2, 0, -2);
+
 
 	flatEntity = new GameEntity(cubeMesh, materialYellow);
-	flatEntity->SetPosition(0, -1, 0);
+	flatEntity->SetPosition(0, -1.5f, 0);
 	flatEntity->SetScale(5.0f, 0.01f, 5.0f);
 	
 }
@@ -196,9 +232,11 @@ void Game::Update(float deltaTime, float totalTime)
 {
 	camera->Update(deltaTime);
 
-	globeEntity->Rotate(0, -deltaTime * 0.2f, 0);
+	for (int i = 0; i <= 8; i++)
+	{
+		sphereEntities[i]->UpdateWorldMatrix();
+	}
 
-	globeEntity->UpdateWorldMatrix();
 	flatEntity->UpdateWorldMatrix();
 
 	if (GetAsyncKeyState(VK_ESCAPE))
@@ -216,12 +254,12 @@ void Game::Draw(float deltaTime, float totalTime)
 	context->ClearRenderTargetView(backBufferRTV, color);
 	context->ClearDepthStencilView(depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
-
-	//render.RenderShadowMap(shadowVertexShader, shadowDepthStencil, shadowRasterizer, context, globeEntity, flatEntity, vertexBuffer, indexBuffer, this->backBufferRTV, this->depthStencilView, shadowMapSize, this->width, this->height, shadowViewMatrix, shadowProjectionMatrix);
-	
-
-	render.RenderProcess(globeEntity, vertexBuffer, indexBuffer, baseVertexShader, basePixelShader, camera, context);
 	render.RenderProcess(flatEntity, vertexBuffer, indexBuffer, baseVertexShader, basePixelShader, camera, context);
+
+	for (int i = 0; i <= 8 ; i++) 
+	{
+		render.RenderProcess(sphereEntities[i], vertexBuffer, indexBuffer, baseVertexShader, basePixelShader, camera, context);
+	}
 
 	render.RenderSkyBox(cubeMesh, vertexBuffer, indexBuffer, skyVertexShader, skyPixelShader, camera, context, skyRasterizerState, skyDepthState, skySRV);
 	
