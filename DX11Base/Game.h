@@ -85,11 +85,12 @@ private:
 	Material* materialYellow;
 	Material* materialSkyBox;
 	Material* materialSnowTracks;
+	Material* materialEmpty;
+
 	//Game Entity Class
 	GameEntity* skyBoxEntity;
-	GameEntity* globeEntity;
-	GameEntity* flatEntity;
 	std::vector<GameEntity*> sphereEntities;
+	std::vector<GameEntity*> flatEntities;
 
 	//Render Class
 	Render render;

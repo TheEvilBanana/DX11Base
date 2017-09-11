@@ -48,10 +48,11 @@ Game::~Game()
 	delete materialYellow;
 	delete materialSkyBox;
 	delete materialSnowTracks;
+	delete materialEmpty;
 
 	delete skyBoxEntity;
-	delete flatEntity;
 	for(auto& se: sphereEntities) delete se;
+	for (auto& fe : flatEntities) delete fe;
 	
 	skyDepthState->Release();
 	skyRasterizerState->Release();
@@ -154,7 +155,8 @@ void Game::MaterialsInitialize()
 	materialRed = new Material(basePixelShader, baseVertexShader, plainRedSRV, plainNormalMapSRV, sampler);
 	materialYellow = new Material(basePixelShader, baseVertexShader, plainYellowSRV, plainNormalMapSRV, sampler);
 	materialSnowTracks = new Material(basePixelShader, baseVertexShader, snowTracksSRV, snowTracksNormalSRV, sampler);
-	
+	materialEmpty = new Material(basePixelShader, baseVertexShader, 0, plainNormalMapSRV, sampler);
+
 	materialSkyBox = new Material(skyPixelShader, skyVertexShader, skySRV, plainNormalMapSRV, sampler);
 	
 }
@@ -211,10 +213,29 @@ void Game::GameEntityInitialize()
 	sphereEntities[8]->SetPosition(-2, 0, -2);
 
 
-	flatEntity = new GameEntity(cubeMesh, materialYellow);
-	flatEntity->SetPosition(0, -1.5f, 0);
-	flatEntity->SetScale(5.0f, 0.01f, 5.0f);
+	GameEntity* flat0 = new GameEntity(cubeMesh, materialEmpty);
+	GameEntity* flat1 = new GameEntity(cubeMesh, materialEmpty);
+	GameEntity* flat2 = new GameEntity(cubeMesh, materialEmpty);
+	GameEntity* flat3 = new GameEntity(cubeMesh, materialEmpty);
 	
+	flatEntities.push_back(flat0);
+	flatEntities.push_back(flat1);
+	flatEntities.push_back(flat2);
+	flatEntities.push_back(flat3);
+
+	flatEntities[0]->SetScale(5.0f, 0.01f, 5.0f);
+	flatEntities[1]->SetScale(5.0f, 0.01f, 5.0f);
+	flatEntities[2]->SetScale(5.0f, 0.01f, 5.0f);
+	flatEntities[3]->SetScale(5.0f, 0.01f, 5.0f);
+
+	flatEntities[0]->SetPosition(0, -1.5f, 0);
+	flatEntities[1]->SetPosition(4.5f, 0, 0);
+	flatEntities[2]->SetPosition(0, 0, 4.5f);
+	flatEntities[3]->SetPosition(-4.5f, 0, 0);
+
+	flatEntities[1]->SetRotation(0, 0, -1.6f);
+	flatEntities[2]->SetRotation(1.6f, 0, 0);
+	flatEntities[3]->SetRotation(0, 0, 1.6f);
 }
 
 void Game::OnResize()
@@ -232,12 +253,18 @@ void Game::Update(float deltaTime, float totalTime)
 {
 	camera->Update(deltaTime);
 
+	//Update Spheres
 	for (int i = 0; i <= 8; i++)
 	{
 		sphereEntities[i]->UpdateWorldMatrix();
 	}
 
-	flatEntity->UpdateWorldMatrix();
+	//Update Flats
+	for (int i = 0; i <= 3; i++)
+	{
+		flatEntities[i]->UpdateWorldMatrix();
+	}
+
 
 	if (GetAsyncKeyState(VK_ESCAPE))
 		Quit();
@@ -254,11 +281,16 @@ void Game::Draw(float deltaTime, float totalTime)
 	context->ClearRenderTargetView(backBufferRTV, color);
 	context->ClearDepthStencilView(depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
-	render.RenderProcess(flatEntity, vertexBuffer, indexBuffer, baseVertexShader, basePixelShader, camera, context);
-
+	//Render Spheres
 	for (int i = 0; i <= 8 ; i++) 
 	{
 		render.RenderProcess(sphereEntities[i], vertexBuffer, indexBuffer, baseVertexShader, basePixelShader, camera, context);
+	}
+
+	//Render Flats
+	for (int i = 0; i <= 3; i++)
+	{
+		render.RenderProcess(flatEntities[i], vertexBuffer, indexBuffer, baseVertexShader, basePixelShader, camera, context);
 	}
 
 	render.RenderSkyBox(cubeMesh, vertexBuffer, indexBuffer, skyVertexShader, skyPixelShader, camera, context, skyRasterizerState, skyDepthState, skySRV);

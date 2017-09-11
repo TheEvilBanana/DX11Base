@@ -26,6 +26,16 @@ private:
 	PointLight pointLight2;
 	PointLight pointLight3;
 	PointLight pointLight4;
+
+	PointLight outerPointLight1;
+	PointLight outerPointLight2;
+	PointLight outerPointLight3;
+	PointLight outerPointLight4;
+	PointLight outerPointLight5;
+	PointLight outerPointLight6;
+	PointLight outerPointLight7;
+	PointLight outerPointLight8;
+
 	SpotLight spotLight;
 };
 

@@ -6,29 +6,41 @@ SamplerState basicSampler : register(s0);
 
 struct DirectionalLight {
 	float4 diffuseColor;
+	//------------------------ 16 bytes
 	float3 direction;
+	float pad;
+	//------------------------
+
 };
 
 struct AmbientLight {
 	float4 ambientColor;
+	//-------------------------
 };
 
 struct PointLight {
 	float4 diffuseColor;
+	//------------------------
 	float3 position;
 	float range;
+	//-----------------------
 	float3 attenuate;
 	float pad;
+	//-----------------------
 };
 
 struct SpotLight {
 	float4 diffuseColor;
+	//-------------------------
 	float3 position;
 	float range;
+	//-------------------------
 	float3 direction;
 	float spot;
+	//-------------------------
 	float3 attenuate;
 	float pad;
+	//-------------------------
 };
 
 cbuffer ExternalData : register(b0) {
@@ -84,7 +96,7 @@ void ComputePointLight(VertexToPixel input, PointLight pointLight, float4 surfac
 	float3 toCamera = normalize(cameraPosition - input.worldPos);
 	float3 refl = reflect(-dirToPointLight, input.normal);
 	float specularPL = pow(saturate(dot(refl, toCamera)), 20);
-	specular *= att;
+	specularPL *= att;
 	diffuse = pointL;
 	specular = specularPL;
 }

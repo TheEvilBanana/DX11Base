@@ -7,10 +7,12 @@ using namespace DirectX;
 struct DirectionalLight {
 	XMFLOAT4 diffuseColor;
 	XMFLOAT3 direction;
+	float pad;
 
-	void SetLightValues(XMFLOAT4 _diffuseColor, XMFLOAT3 _direction) {
+	void SetLightValues(XMFLOAT4 _diffuseColor, XMFLOAT3 _direction, float _pad) {
 		diffuseColor = _diffuseColor;
 		direction = _direction;
+		pad = _pad;
 	}
 };
 
