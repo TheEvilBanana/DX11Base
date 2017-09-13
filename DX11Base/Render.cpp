@@ -27,12 +27,25 @@ void Render::RenderProcess(GameEntity* &gameEntity, ID3D11Buffer* &vertexBuffer,
 	vertexShader->SetShader();
 
 	pixelShader->SetData("dirLight_1", &dirLight_1, sizeof(DirectionalLight));
+
 	pixelShader->SetData("ambientLight", &ambientLight, sizeof(AmbientLight));
+
 	pixelShader->SetData("pointLight1", &pointLight1, sizeof(PointLight));
 	pixelShader->SetData("pointLight2", &pointLight2, sizeof(PointLight));
 	pixelShader->SetData("pointLight3", &pointLight3, sizeof(PointLight));
 	pixelShader->SetData("pointLight4", &pointLight4, sizeof(PointLight));
+
+	pixelShader->SetData("outerPointLight1", &outerPointLight1, sizeof(PointLight));
+	pixelShader->SetData("outerPointLight2", &outerPointLight2, sizeof(PointLight));
+	pixelShader->SetData("outerPointLight3", &outerPointLight3, sizeof(PointLight));
+	pixelShader->SetData("outerPointLight4", &outerPointLight4, sizeof(PointLight));
+	pixelShader->SetData("outerPointLight5", &outerPointLight5, sizeof(PointLight));
+	pixelShader->SetData("outerPointLight6", &outerPointLight6, sizeof(PointLight));
+	pixelShader->SetData("outerPointLight7", &outerPointLight7, sizeof(PointLight));
+	pixelShader->SetData("outerPointLight8", &outerPointLight8, sizeof(PointLight));
+
 	pixelShader->SetData("spotLight", &spotLight, sizeof(SpotLight));
+
 	pixelShader->SetFloat3("cameraPosition", camera->GetPosition());
 
 	pixelShader->SetShaderResourceView("textureSRV", gameEntity->GetMaterial()->GetMaterialSRV());
@@ -85,6 +98,14 @@ void Render::SetLights()
 	pointLight2.SetLightValues(XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f), XMFLOAT3(-2.0f, 0.0f, 0.0f), 7.0f, XMFLOAT3(0.0f, 1.0f, 0.0f), 0.0f);
 	pointLight3.SetLightValues(XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 2.0f), 7.0f, XMFLOAT3(0.0f, 1.0f, 0.0f), 0.0f);
 	pointLight4.SetLightValues(XMFLOAT4(0.6f, 0.0f, 0.4f, 1.0f), XMFLOAT3(0.0f, 0.0f, -2.0f), 7.0f, XMFLOAT3(0.0f, 1.0f, 0.0f), 0.0f);
+	outerPointLight1.SetLightValues(XMFLOAT4(0.1f, 0.9f, 0.1f, 1.0f), XMFLOAT3(0.0f, 0.0f, -4.0f), 7.0f, XMFLOAT3(0.0f, 1.0f, 0.0f), 0.0f);
+	outerPointLight2.SetLightValues(XMFLOAT4(0.8f, 0.2f, 0.0f, 1.0f), XMFLOAT3(4.0f, 0.0f, -4.0f), 7.0f, XMFLOAT3(0.0f, 1.0f, 0.0f), 0.0f);
+	outerPointLight3.SetLightValues(XMFLOAT4(0.0f, 0.3f, 0.8f, 1.0f), XMFLOAT3(4.0f, 0.0f, 0.0f), 7.0f, XMFLOAT3(0.0f, 1.0f, 0.0f), 0.0f);
+	outerPointLight4.SetLightValues(XMFLOAT4(0.9f, 0.3f, 0.3f, 1.0f), XMFLOAT3(4.0f, 0.0f, 4.0f), 7.0f, XMFLOAT3(0.0f, 1.0f, 0.0f), 0.0f);
+	outerPointLight5.SetLightValues(XMFLOAT4(0.2f, 0.7f, 0.3f, 1.0f), XMFLOAT3(0.0f, 0.0f, 4.0f), 7.0f, XMFLOAT3(0.0f, 1.0f, 0.0f), 0.0f);
+	outerPointLight6.SetLightValues(XMFLOAT4(0.1f, 0.0f, 0.8f, 1.0f), XMFLOAT3(-4.0f, 0.0f, 4.0f), 7.0f, XMFLOAT3(0.0f, 1.0f, 0.0f), 0.0f);
+	outerPointLight7.SetLightValues(XMFLOAT4(0.9f, 0.0f, 0.3f, 1.0f), XMFLOAT3(-4.0f, 0.0f, 0.0f), 7.0f, XMFLOAT3(0.0f, 1.0f, 0.0f), 0.0f);
+	outerPointLight8.SetLightValues(XMFLOAT4(0.0f, 0.8f, 0.3f, 1.0f), XMFLOAT3(-4.0f, 0.0f,-4.0f), 7.0f, XMFLOAT3(0.0f, 1.0f, 0.0f), 0.0f);
 	spotLight.SetLightValues(XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f), 10.0f, XMFLOAT3(0.0f, -1.0f, 0.0f), 5.0f, XMFLOAT3(0.0f, 1.0f, 0.0f), 0.0f);
 	
 }

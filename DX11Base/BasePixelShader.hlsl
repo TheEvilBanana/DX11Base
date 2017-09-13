@@ -45,12 +45,25 @@ struct SpotLight {
 
 cbuffer ExternalData : register(b0) {
 	DirectionalLight dirLight_1;
+	
 	AmbientLight ambientLight;
+	
 	PointLight pointLight1;
 	PointLight pointLight2;
 	PointLight pointLight3;
 	PointLight pointLight4;
+
+	PointLight outerPointLight1;
+	PointLight outerPointLight2;
+	PointLight outerPointLight3;
+	PointLight outerPointLight4;
+	PointLight outerPointLight5;
+	PointLight outerPointLight6;
+	PointLight outerPointLight7;
+	PointLight outerPointLight8;
+
 	SpotLight spotLight;
+	
 	float3 cameraPosition;
 };
 
@@ -169,11 +182,53 @@ float4 main(VertexToPixel input) : SV_TARGET
 	diffuse += D;
 	specular += S;
 
+	
+	
+	//Outer Point light 1
+	ComputePointLight(input, outerPointLight1, surfaceColor, D, S);
+	diffuse += D;
+	specular += S;
+
+	//Outer Point light 2
+	ComputePointLight(input, outerPointLight2, surfaceColor, D, S);
+	diffuse += D;
+	specular += S;
+
+	//Outer Point light 3
+	ComputePointLight(input, outerPointLight3, surfaceColor, D, S);
+	diffuse += D;
+	specular += S;
+
+	//Outer Point light 4
+	ComputePointLight(input, outerPointLight4, surfaceColor, D, S);
+	diffuse += D;
+	specular += S;
+
+	//Outer Point light 5
+	ComputePointLight(input, outerPointLight5, surfaceColor, D, S);
+	diffuse += D;
+	specular += S;
+
+	//Outer Point light 6
+	ComputePointLight(input, outerPointLight6, surfaceColor, D, S);
+	diffuse += D;
+	specular += S;
+
+	//Outer Point light 7
+	ComputePointLight(input, outerPointLight7, surfaceColor, D, S);
+	diffuse += D;
+	specular += S;
+
+	//Outer Point light 8
+	ComputePointLight(input, outerPointLight8, surfaceColor, D, S);
+	diffuse += D;
+	specular += S;
+
 	//Spot light
 	ComputeSpotLight(input, spotLight, surfaceColor, D, S);
 	diffuse += D;
 	specular += S;
-	
+
 	//Total light
 	float4 totalLight = diffuse + specular + ambient;
 	return totalLight;
