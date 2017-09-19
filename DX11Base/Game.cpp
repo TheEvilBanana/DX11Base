@@ -26,7 +26,7 @@ Game::Game(HINSTANCE hInstance)
 
 	for (i = 0; i<3; i++)
 	{
-		renderTargetTextureArray[i] = 0;
+		//renderTargetTextureArray[i] = 0;
 		renderTargetViewArray[i] = 0;
 		shaderResourceViewArray[i] = 0;
 	}
@@ -51,6 +51,8 @@ Game::~Game()
 	delete baseVertexShader;
 	delete skyVertexShader;
 	delete skyPixelShader;
+	delete displayVertexShader;
+	delete displayPixelShader;
 
 	delete sphereMesh;
 	delete cubeMesh;
@@ -92,7 +94,7 @@ Game::~Game()
 	{
 		shaderResourceViewArray[i]->Release();
 		renderTargetViewArray[i]->Release();
-		renderTargetTextureArray[i]->Release();
+		//renderTargetTextureArray[i]->Release();
 	}
 
 	delete deferredVertexShader;
@@ -122,47 +124,77 @@ void Game::DeferredSetupInitialize()
 {
 	int i;
 
-	D3D11_TEXTURE2D_DESC textureDescDR;
+	D3D11_TEXTURE2D_DESC textureDescPosNorm;
+	D3D11_TEXTURE2D_DESC textureDescDiffuse;
 
-	textureDescDR.Width = width;
-	textureDescDR.Height = height;
-	textureDescDR.MipLevels = 1;
-	textureDescDR.ArraySize = 1;
-	textureDescDR.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-	textureDescDR.SampleDesc.Count = 1;
-	textureDescDR.Usage = D3D11_USAGE_DEFAULT;
-	textureDescDR.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
-	textureDescDR.CPUAccessFlags = 0;
-	textureDescDR.MiscFlags = 0;
+	textureDescPosNorm.Width = width;
+	textureDescPosNorm.Height = height;
+	textureDescPosNorm.MipLevels = 1;
+	textureDescPosNorm.ArraySize = 1;
+	textureDescPosNorm.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+	textureDescPosNorm.SampleDesc.Count = 1;
+	textureDescPosNorm.Usage = D3D11_USAGE_DEFAULT;
+	textureDescPosNorm.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+	textureDescPosNorm.CPUAccessFlags = 0;
+	textureDescPosNorm.MiscFlags = 0;
 
-	for (i = 0; i < 3; i++)
+	textureDescDiffuse.Width = width;
+	textureDescDiffuse.Height = height;
+	textureDescDiffuse.MipLevels = 1;
+	textureDescDiffuse.ArraySize = 1;
+	textureDescDiffuse.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	textureDescDiffuse.SampleDesc.Count = 1;
+	textureDescDiffuse.Usage = D3D11_USAGE_DEFAULT;
+	textureDescDiffuse.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+	textureDescDiffuse.CPUAccessFlags = 0;
+	textureDescDiffuse.MiscFlags = 0;
+
+	ID3D11Texture2D* renderTargetTextureArray[3];
+
+	device->CreateTexture2D(&textureDescPosNorm, 0, &renderTargetTextureArray[0]);
+	device->CreateTexture2D(&textureDescPosNorm, 0, &renderTargetTextureArray[1]);
+	device->CreateTexture2D(&textureDescPosNorm, 0, &renderTargetTextureArray[2]);
+
+	/*for (i = 0; i < 3; i++)
 	{
-		device->CreateTexture2D(&textureDescDR, NULL, &renderTargetTextureArray[i]);
-	}
+		device->CreateTexture2D(&textureDescDR, 0, &renderTargetTextureArray[i]);
+	}*/
 
 	D3D11_RENDER_TARGET_VIEW_DESC renderTargetViewDescDR;
 	
-	renderTargetViewDescDR.Format = textureDescDR.Format;
+	renderTargetViewDescDR.Format = textureDescPosNorm.Format;
 	renderTargetViewDescDR.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
 	renderTargetViewDescDR.Texture2D.MipSlice = 0;
 
-	for (i = 0; i < 3; i++)
-	{
+	device->CreateRenderTargetView(renderTargetTextureArray[0], &renderTargetViewDescDR, &renderTargetViewArray[0]);
+	device->CreateRenderTargetView(renderTargetTextureArray[1], &renderTargetViewDescDR, &renderTargetViewArray[1]);
+	device->CreateRenderTargetView(renderTargetTextureArray[2], &renderTargetViewDescDR, &renderTargetViewArray[2]);
+	/*for (i = 0; i < 3; i++)
+	{	
+		swapChain->GetBuffer(0,	__uuidof(ID3D11Texture2D),	(void**)&renderTargetTextureArray[i]);
 		device->CreateRenderTargetView(renderTargetTextureArray[i], &renderTargetViewDescDR, &renderTargetViewArray[i]);
 		
-	}
+	}*/
 
 	D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDescDR;
 
-	shaderResourceViewDescDR.Format = textureDescDR.Format;
+	shaderResourceViewDescDR.Format = textureDescPosNorm.Format;
 	shaderResourceViewDescDR.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 	shaderResourceViewDescDR.Texture2D.MostDetailedMip = 0;
 	shaderResourceViewDescDR.Texture2D.MipLevels = 1;
 
-	for (i = 0; i < 3; i++)
+	device->CreateShaderResourceView(renderTargetTextureArray[0], &shaderResourceViewDescDR, &shaderResourceViewArray[0]);
+	device->CreateShaderResourceView(renderTargetTextureArray[1], &shaderResourceViewDescDR, &shaderResourceViewArray[1]);
+	device->CreateShaderResourceView(renderTargetTextureArray[2], &shaderResourceViewDescDR, &shaderResourceViewArray[2]);
+	/*for (i = 0; i < 3; i++)
 	{
 		device->CreateShaderResourceView(renderTargetTextureArray[i], &shaderResourceViewDescDR, &shaderResourceViewArray[i]);
 		
+	}*/
+
+	for (i = 0; i < 3; i++)
+	{
+		renderTargetTextureArray[i]->Release();
 	}
 
 	D3D11_TEXTURE2D_DESC depthBufferDescDR;
@@ -443,7 +475,7 @@ void Game::Draw(float deltaTime, float totalTime)
 	context->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
 	context->DrawIndexed(sphereEntities[0]->GetMesh()->GetIndexCount(), 0, 0);
-
+//-----------------------------
 	context->ClearRenderTargetView(backBufferRTV, color);
 	context->ClearDepthStencilView(depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
