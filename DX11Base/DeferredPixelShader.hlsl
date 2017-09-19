@@ -20,7 +20,7 @@ struct PSOut
 	float4 Diffuse		: SV_Target2;
 };
 
-PSOut main(VertexToPixel input)
+PSOut main(VertexToPixel input) 
 {
 	PSOut output;
 
@@ -40,4 +40,6 @@ PSOut main(VertexToPixel input)
 	output.Position = float4(input.worldPos, 1.0f);
 	output.Normal = float4(normalWS, 1.0f);
 	output.Diffuse = float4(diffuse, 1.0f);
+
+	return output;
 }

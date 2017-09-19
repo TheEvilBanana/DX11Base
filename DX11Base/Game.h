@@ -65,6 +65,8 @@ private:
 	SimpleVertexShader* skyVertexShader;
 	SimplePixelShader* skyPixelShader;
 	SimpleVertexShader* shadowVertexShader;
+	SimpleVertexShader* displayVertexShader;
+	SimplePixelShader* displayPixelShader;
 
 	// Sampler for wrapping textures
 	ID3D11SamplerState* sampler;

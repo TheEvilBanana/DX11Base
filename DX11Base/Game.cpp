@@ -22,6 +22,18 @@ Game::Game(HINSTANCE hInstance)
 	camera = 0;
 	
 
+	int i;
+
+	for (i = 0; i<3; i++)
+	{
+		renderTargetTextureArray[i] = 0;
+		renderTargetViewArray[i] = 0;
+		shaderResourceViewArray[i] = 0;
+	}
+
+	depthStencilBufferDR = 0;
+	depthStencilViewDR = 0;
+
 #if defined(DEBUG) || defined(_DEBUG)
 	// Do we want a console window?  Probably only in debug mode
 	CreateConsoleWindow(500, 120, 32, 120);
@@ -109,16 +121,6 @@ void Game::Init()
 void Game::DeferredSetupInitialize()
 {
 	int i;
-
-	for (i = 0; i<3; i++)
-	{
-		renderTargetTextureArray[i] = 0;
-		renderTargetViewArray[i] = 0;
-		shaderResourceViewArray[i] = 0;
-	}
-
-	depthStencilBufferDR = 0;
-	depthStencilViewDR = 0;
 
 	D3D11_TEXTURE2D_DESC textureDescDR;
 
@@ -224,6 +226,13 @@ void Game::ShadersInitialize()
 	if (!deferredPixelShader->LoadShaderFile(L"Debug/DeferredPixelShader.cso"))
 		deferredPixelShader->LoadShaderFile(L"DeferredPixelShader.cso");
 
+	displayVertexShader = new SimpleVertexShader(device, context);
+	if (!displayVertexShader->LoadShaderFile(L"Debug/DisplayVertexShader.cso"))
+		displayVertexShader->LoadShaderFile(L"DisplayVertexShader.cso");
+
+	displayPixelShader = new SimplePixelShader(device, context);
+	if (!displayPixelShader->LoadShaderFile(L"Debug/DisplayPixelShader.cso"))
+		displayPixelShader->LoadShaderFile(L"DisplayPixelShader.cso");
 
 }
 
@@ -438,13 +447,22 @@ void Game::Draw(float deltaTime, float totalTime)
 	context->ClearRenderTargetView(backBufferRTV, color);
 	context->ClearDepthStencilView(depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
-	context->OMSetRenderTargets(1, &backBufferRTV, depthStencilView);
+	context->OMSetRenderTargets(1, &backBufferRTV, 0);
 
-	context->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
-	context->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);
+	displayVertexShader->SetShader();
 
-	context->DrawIndexed(sphereEntities[0]->GetMesh()->GetIndexCount(), 0, 0);
+	displayPixelShader->SetShaderResourceView("Texture", shaderResourceViewArray[0]);
+	displayPixelShader->SetSamplerState("Sampler", sampler);
+	displayPixelShader->CopyAllBufferData();
+	displayPixelShader->SetShader();
 
+	ID3D11Buffer* nothing = 0;
+	context->IASetVertexBuffers(0, 1, &nothing, &stride, &offset);
+	context->IASetIndexBuffer(0, DXGI_FORMAT_R32_UINT, 0);
+
+	// Actually draw exactly 3 vertices
+	context->Draw(3, 0);
+	displayPixelShader->SetShaderResourceView("Texture", 0);
 	swapChain->Present(0, 0);
 }
 
