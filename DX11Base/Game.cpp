@@ -32,6 +32,7 @@ Game::Game(HINSTANCE hInstance)
 
 Game::~Game()
 {
+
 	delete camera;
 
 	delete basePixelShader;
@@ -71,14 +72,26 @@ Game::~Game()
 
 	skySRV->Release();
 	
+	//Deferred Stuff release
+	depthStencilBufferDR->Release();
+	depthStencilViewDR->Release();
 
+	for (int i = 0; i < 3; i++)
+	{
+		shaderResourceViewArray[i]->Release();
+		renderTargetViewArray[i]->Release();
+		renderTargetTextureArray[i]->Release();
+	}
 
+	delete deferredVertexShader;
+	delete deferredPixelShader;
 }
 
 
 void Game::Init()
 {
 	//Initialize helper methods
+	DeferredSetupInitialize();
 	CameraInitialize();
 	ShadersInitialize();
 	ModelsInitialize();
@@ -91,6 +104,92 @@ void Game::Init()
 	// geometric primitives (points, lines or triangles) we want to draw.  
 	// Essentially: "What kind of shape should the GPU draw with our data?"
 	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+}
+
+void Game::DeferredSetupInitialize()
+{
+	int i;
+
+	for (i = 0; i<3; i++)
+	{
+		renderTargetTextureArray[i] = 0;
+		renderTargetViewArray[i] = 0;
+		shaderResourceViewArray[i] = 0;
+	}
+
+	depthStencilBufferDR = 0;
+	depthStencilViewDR = 0;
+
+	D3D11_TEXTURE2D_DESC textureDescDR;
+
+	textureDescDR.Width = width;
+	textureDescDR.Height = height;
+	textureDescDR.MipLevels = 1;
+	textureDescDR.ArraySize = 1;
+	textureDescDR.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+	textureDescDR.SampleDesc.Count = 1;
+	textureDescDR.Usage = D3D11_USAGE_DEFAULT;
+	textureDescDR.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+	textureDescDR.CPUAccessFlags = 0;
+	textureDescDR.MiscFlags = 0;
+
+	for (i = 0; i < 3; i++)
+	{
+		device->CreateTexture2D(&textureDescDR, NULL, &renderTargetTextureArray[i]);
+	}
+
+	D3D11_RENDER_TARGET_VIEW_DESC renderTargetViewDescDR;
+	
+	renderTargetViewDescDR.Format = textureDescDR.Format;
+	renderTargetViewDescDR.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+	renderTargetViewDescDR.Texture2D.MipSlice = 0;
+
+	for (i = 0; i < 3; i++)
+	{
+		device->CreateRenderTargetView(renderTargetTextureArray[i], &renderTargetViewDescDR, &renderTargetViewArray[i]);
+		
+	}
+
+	D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDescDR;
+
+	shaderResourceViewDescDR.Format = textureDescDR.Format;
+	shaderResourceViewDescDR.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	shaderResourceViewDescDR.Texture2D.MostDetailedMip = 0;
+	shaderResourceViewDescDR.Texture2D.MipLevels = 1;
+
+	for (i = 0; i < 3; i++)
+	{
+		device->CreateShaderResourceView(renderTargetTextureArray[i], &shaderResourceViewDescDR, &shaderResourceViewArray[i]);
+		
+	}
+
+	D3D11_TEXTURE2D_DESC depthBufferDescDR;
+
+	depthBufferDescDR.Width = width;
+	depthBufferDescDR.Height = height;
+	depthBufferDescDR.MipLevels = 1;
+	depthBufferDescDR.ArraySize = 1;
+	depthBufferDescDR.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	depthBufferDescDR.SampleDesc.Count = 1;
+	depthBufferDescDR.SampleDesc.Quality = 0;
+	depthBufferDescDR.Usage = D3D11_USAGE_DEFAULT;
+	depthBufferDescDR.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+	depthBufferDescDR.CPUAccessFlags = 0;
+	depthBufferDescDR.MiscFlags = 0;
+
+	device->CreateTexture2D(&depthBufferDescDR, NULL, &depthStencilBufferDR);
+	
+	D3D11_DEPTH_STENCIL_VIEW_DESC depthStencilViewDescDR;
+
+	depthStencilViewDescDR.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	depthStencilViewDescDR.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+	depthStencilViewDescDR.Texture2D.MipSlice = 0;
+
+	device->CreateDepthStencilView(depthStencilBufferDR, &depthStencilViewDescDR, &depthStencilViewDR);
+
+	//context->OMSetRenderTargets(3, renderTargetViewArray, depthStencilViewDR);
+
+
 }
 
 void Game::CameraInitialize()
@@ -116,6 +215,16 @@ void Game::ShadersInitialize()
 	skyPixelShader = new SimplePixelShader(device, context);
 	if (!skyPixelShader->LoadShaderFile(L"Debug/SkyBoxPixelShader.cso"))
 		skyPixelShader->LoadShaderFile(L"SkyBoxPixelShader.cso");
+
+	deferredVertexShader = new SimpleVertexShader(device, context);
+	if (!deferredVertexShader->LoadShaderFile(L"Debug/DeferredVertexShader.cso"))
+		deferredVertexShader->LoadShaderFile(L"DeferredVertexShader.cso");
+
+	deferredPixelShader = new SimplePixelShader(device, context);
+	if (!deferredPixelShader->LoadShaderFile(L"Debug/DeferredPixelShader.cso"))
+		deferredPixelShader->LoadShaderFile(L"DeferredPixelShader.cso");
+
+
 }
 
 void Game::ModelsInitialize()
@@ -274,27 +383,68 @@ void Game::Draw(float deltaTime, float totalTime)
 {
 	// Background color (Cornflower Blue in this case) for clearing
 	const float color[4] = { 0.6f, 0.6f, 0.6f, 0.0f };
-
+	UINT stride = sizeof(Vertex);
+	UINT offset = 0;
 	// Clear the render target and depth buffer (erases what's on the screen)
 	//  - Do this ONCE PER FRAME
 	//  - At the beginning of Draw (before drawing *anything*)
-	context->ClearRenderTargetView(backBufferRTV, color);
-	context->ClearDepthStencilView(depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+	//context->ClearRenderTargetView(backBufferRTV, color);
+	//context->ClearDepthStencilView(depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 	//Render Spheres
-	for (int i = 0; i <= 8 ; i++) 
-	{
-		render.RenderProcess(sphereEntities[i], vertexBuffer, indexBuffer, baseVertexShader, basePixelShader, camera, context);
-	}
+	//for (int i = 0; i <= 8 ; i++) 
+	//{
+	//	render.RenderProcess(sphereEntities[i], vertexBuffer, indexBuffer, baseVertexShader, basePixelShader, camera, context);
+	//}
 
 	//Render Flats
-	for (int i = 0; i <= 3; i++)
+	/*for (int i = 0; i <= 3; i++)
 	{
 		render.RenderProcess(flatEntities[i], vertexBuffer, indexBuffer, baseVertexShader, basePixelShader, camera, context);
 	}
 
-	render.RenderSkyBox(cubeMesh, vertexBuffer, indexBuffer, skyVertexShader, skyPixelShader, camera, context, skyRasterizerState, skyDepthState, skySRV);
+	render.RenderSkyBox(cubeMesh, vertexBuffer, indexBuffer, skyVertexShader, skyPixelShader, camera, context, skyRasterizerState, skyDepthState, skySRV);*/
+
+	context->ClearRenderTargetView(renderTargetViewArray[0], color);
+	context->ClearRenderTargetView(renderTargetViewArray[1], color);
+	context->ClearRenderTargetView(renderTargetViewArray[2], color);
 	
+	context->ClearDepthStencilView(depthStencilViewDR, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+
+	context->OMSetRenderTargets(3, renderTargetViewArray, depthStencilViewDR);
+
+	vertexBuffer = sphereEntities[0]->GetMesh()->GetVertexBuffer();
+	indexBuffer = sphereEntities[0]->GetMesh()->GetIndexBuffer();
+
+	deferredVertexShader->SetMatrix4x4("world", *sphereEntities[0]->GetWorldMatrix());
+	deferredVertexShader->SetMatrix4x4("view", camera->GetView());
+	deferredVertexShader->SetMatrix4x4("projection", camera->GetProjection());
+
+	deferredVertexShader->CopyAllBufferData();
+	deferredVertexShader->SetShader();
+
+	deferredPixelShader->SetShaderResourceView("textureSRV", sphereEntities[0]->GetMaterial()->GetMaterialSRV());
+	deferredPixelShader->SetShaderResourceView("normalMapSRV", sphereEntities[0]->GetMaterial()->GetNormalSRV());
+	deferredPixelShader->SetSamplerState("basicSampler", sphereEntities[0]->GetMaterial()->GetMaterialSampler());
+
+	deferredPixelShader->CopyAllBufferData();
+	deferredPixelShader->SetShader();
+
+	context->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
+	context->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);
+
+	context->DrawIndexed(sphereEntities[0]->GetMesh()->GetIndexCount(), 0, 0);
+
+	context->ClearRenderTargetView(backBufferRTV, color);
+	context->ClearDepthStencilView(depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+
+	context->OMSetRenderTargets(1, &backBufferRTV, depthStencilView);
+
+	context->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
+	context->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);
+
+	context->DrawIndexed(sphereEntities[0]->GetMesh()->GetIndexCount(), 0, 0);
+
 	swapChain->Present(0, 0);
 }
 

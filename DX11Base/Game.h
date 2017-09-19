@@ -33,6 +33,7 @@ public:
 private:
 
 	// Initialization helper methods 
+	void DeferredSetupInitialize();
 	void CameraInitialize();
 	void ShadersInitialize();
 	void ModelsInitialize();
@@ -40,6 +41,18 @@ private:
 	void MaterialsInitialize();
 	void SkyBoxInitialize();
 	void GameEntityInitialize();
+
+
+	//Deferred Rendering Requirements
+	ID3D11Texture2D* renderTargetTextureArray[3];
+	ID3D11RenderTargetView* renderTargetViewArray[3];
+	ID3D11ShaderResourceView* shaderResourceViewArray[3];
+	ID3D11Texture2D* depthStencilBufferDR;
+	ID3D11DepthStencilView* depthStencilViewDR;
+	D3D11_VIEWPORT viewportDR;
+
+	SimpleVertexShader* deferredVertexShader;
+	SimplePixelShader* deferredPixelShader;
 
 	// Buffers to hold actual geometry data
 	ID3D11Buffer* vertexBuffer;
