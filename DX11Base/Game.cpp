@@ -88,7 +88,7 @@ Game::~Game()
 	
 	//Deferred Stuff release
 	depthStencilBufferDR->Release();
-	depthStencilViewDR->Release();
+	//depthStencilViewDR->Release();
 
 	for (int i = 0; i < 3; i++)
 	{
@@ -133,6 +133,7 @@ void Game::DeferredSetupInitialize()
 	textureDescPosNorm.ArraySize = 1;
 	textureDescPosNorm.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
 	textureDescPosNorm.SampleDesc.Count = 1;
+	textureDescPosNorm.SampleDesc.Quality = 0;
 	textureDescPosNorm.Usage = D3D11_USAGE_DEFAULT;
 	textureDescPosNorm.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
 	textureDescPosNorm.CPUAccessFlags = 0;
@@ -144,6 +145,7 @@ void Game::DeferredSetupInitialize()
 	textureDescDiffuse.ArraySize = 1;
 	textureDescDiffuse.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	textureDescDiffuse.SampleDesc.Count = 1;
+	textureDescDiffuse.SampleDesc.Quality = 0;
 	textureDescDiffuse.Usage = D3D11_USAGE_DEFAULT;
 	textureDescDiffuse.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
 	textureDescDiffuse.CPUAccessFlags = 0;
@@ -402,18 +404,18 @@ void Game::OnResize()
 void Game::Update(float deltaTime, float totalTime)
 {
 	camera->Update(deltaTime);
-
+	sphereEntities[0]->UpdateWorldMatrix();
 	//Update Spheres
-	for (int i = 0; i <= 8; i++)
+	/*for (int i = 0; i <= 8; i++)
 	{
 		sphereEntities[i]->UpdateWorldMatrix();
-	}
+	}*/
 
 	//Update Flats
-	for (int i = 0; i <= 3; i++)
+	/*for (int i = 0; i <= 3; i++)
 	{
 		flatEntities[i]->UpdateWorldMatrix();
-	}
+	}*/
 
 
 	if (GetAsyncKeyState(VK_ESCAPE))
@@ -446,13 +448,13 @@ void Game::Draw(float deltaTime, float totalTime)
 
 	render.RenderSkyBox(cubeMesh, vertexBuffer, indexBuffer, skyVertexShader, skyPixelShader, camera, context, skyRasterizerState, skyDepthState, skySRV);*/
 
+	context->OMSetRenderTargets(3, renderTargetViewArray, depthStencilViewDR);
+
 	context->ClearRenderTargetView(renderTargetViewArray[0], color);
 	context->ClearRenderTargetView(renderTargetViewArray[1], color);
 	context->ClearRenderTargetView(renderTargetViewArray[2], color);
 	
-	context->ClearDepthStencilView(depthStencilViewDR, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
-
-	context->OMSetRenderTargets(3, renderTargetViewArray, depthStencilViewDR);
+	//context->ClearDepthStencilView(depthStencilViewDR, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 	vertexBuffer = sphereEntities[0]->GetMesh()->GetVertexBuffer();
 	indexBuffer = sphereEntities[0]->GetMesh()->GetIndexBuffer();
@@ -476,14 +478,14 @@ void Game::Draw(float deltaTime, float totalTime)
 
 	context->DrawIndexed(sphereEntities[0]->GetMesh()->GetIndexCount(), 0, 0);
 //-----------------------------
-	context->ClearRenderTargetView(backBufferRTV, color);
-	context->ClearDepthStencilView(depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
-
 	context->OMSetRenderTargets(1, &backBufferRTV, 0);
+
+	context->ClearRenderTargetView(backBufferRTV, color);
+	context->ClearDepthStencilView(depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);	
 
 	displayVertexShader->SetShader();
 
-	displayPixelShader->SetShaderResourceView("Texture", shaderResourceViewArray[0]);
+	displayPixelShader->SetShaderResourceView("Texture", shaderResourceViewArray[2]);
 	displayPixelShader->SetSamplerState("Sampler", sampler);
 	displayPixelShader->CopyAllBufferData();
 	displayPixelShader->SetShader();
