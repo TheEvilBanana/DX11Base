@@ -20,7 +20,7 @@ struct PSOut
 	float4 Diffuse		: SV_Target2;
 };
 
-PSOut main(VertexToPixel input) 
+PSOut main(in VertexToPixel input) 
 {
 	PSOut output;
 

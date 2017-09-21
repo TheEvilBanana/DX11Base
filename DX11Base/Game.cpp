@@ -88,13 +88,13 @@ Game::~Game()
 	
 	//Deferred Stuff release
 	depthStencilBufferDR->Release();
-	//depthStencilViewDR->Release();
+	depthStencilViewDR->Release();
 
 	for (int i = 0; i < 3; i++)
 	{
 		shaderResourceViewArray[i]->Release();
 		renderTargetViewArray[i]->Release();
-		//renderTargetTextureArray[i]->Release();
+		
 	}
 
 	delete deferredVertexShader;
@@ -114,6 +114,7 @@ void Game::Init()
 	SkyBoxInitialize();
 	GameEntityInitialize();
 
+	switcher = 1;
 	// Tell the input assembler stage of the pipeline what kind of
 	// geometric primitives (points, lines or triangles) we want to draw.  
 	// Essentially: "What kind of shape should the GPU draw with our data?"
@@ -123,10 +124,11 @@ void Game::Init()
 void Game::DeferredSetupInitialize()
 {
 	int i;
-
+	// Texture Discriptions
 	D3D11_TEXTURE2D_DESC textureDescPosNorm;
 	D3D11_TEXTURE2D_DESC textureDescDiffuse;
 
+	// Texture for Position and Normal are 32 bit 
 	textureDescPosNorm.Width = width;
 	textureDescPosNorm.Height = height;
 	textureDescPosNorm.MipLevels = 1;
@@ -139,6 +141,7 @@ void Game::DeferredSetupInitialize()
 	textureDescPosNorm.CPUAccessFlags = 0;
 	textureDescPosNorm.MiscFlags = 0;
 
+	//Texture for diffuse is 8 bit 
 	textureDescDiffuse.Width = width;
 	textureDescDiffuse.Height = height;
 	textureDescDiffuse.MipLevels = 1;
@@ -151,33 +154,33 @@ void Game::DeferredSetupInitialize()
 	textureDescDiffuse.CPUAccessFlags = 0;
 	textureDescDiffuse.MiscFlags = 0;
 
+	//Create render target array
 	ID3D11Texture2D* renderTargetTextureArray[3];
 
 	device->CreateTexture2D(&textureDescPosNorm, 0, &renderTargetTextureArray[0]);
 	device->CreateTexture2D(&textureDescPosNorm, 0, &renderTargetTextureArray[1]);
 	device->CreateTexture2D(&textureDescPosNorm, 0, &renderTargetTextureArray[2]);
 
-	/*for (i = 0; i < 3; i++)
-	{
-		device->CreateTexture2D(&textureDescDR, 0, &renderTargetTextureArray[i]);
-	}*/
-
-	D3D11_RENDER_TARGET_VIEW_DESC renderTargetViewDescDR;
+	// Render target desc for 32bit
+	D3D11_RENDER_TARGET_VIEW_DESC renderTargetViewDesc32;
 	
-	renderTargetViewDescDR.Format = textureDescPosNorm.Format;
-	renderTargetViewDescDR.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
-	renderTargetViewDescDR.Texture2D.MipSlice = 0;
+	renderTargetViewDesc32.Format = textureDescPosNorm.Format;
+	renderTargetViewDesc32.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+	renderTargetViewDesc32.Texture2D.MipSlice = 0;
 
-	device->CreateRenderTargetView(renderTargetTextureArray[0], &renderTargetViewDescDR, &renderTargetViewArray[0]);
-	device->CreateRenderTargetView(renderTargetTextureArray[1], &renderTargetViewDescDR, &renderTargetViewArray[1]);
-	device->CreateRenderTargetView(renderTargetTextureArray[2], &renderTargetViewDescDR, &renderTargetViewArray[2]);
-	/*for (i = 0; i < 3; i++)
-	{	
-		swapChain->GetBuffer(0,	__uuidof(ID3D11Texture2D),	(void**)&renderTargetTextureArray[i]);
-		device->CreateRenderTargetView(renderTargetTextureArray[i], &renderTargetViewDescDR, &renderTargetViewArray[i]);
-		
-	}*/
+	// Render target desc for 8bit
+	D3D11_RENDER_TARGET_VIEW_DESC renderTargetViewDesc8;
 
+	renderTargetViewDesc8.Format = textureDescPosNorm.Format;
+	renderTargetViewDesc8.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+	renderTargetViewDesc8.Texture2D.MipSlice = 0;
+
+	//Create the render target arrays
+	device->CreateRenderTargetView(renderTargetTextureArray[0], &renderTargetViewDesc32, &renderTargetViewArray[0]);
+	device->CreateRenderTargetView(renderTargetTextureArray[1], &renderTargetViewDesc32, &renderTargetViewArray[1]);
+	device->CreateRenderTargetView(renderTargetTextureArray[2], &renderTargetViewDesc8, &renderTargetViewArray[2]);
+
+	//Creste SRV desc
 	D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDescDR;
 
 	shaderResourceViewDescDR.Format = textureDescPosNorm.Format;
@@ -185,20 +188,20 @@ void Game::DeferredSetupInitialize()
 	shaderResourceViewDescDR.Texture2D.MostDetailedMip = 0;
 	shaderResourceViewDescDR.Texture2D.MipLevels = 1;
 
-	device->CreateShaderResourceView(renderTargetTextureArray[0], &shaderResourceViewDescDR, &shaderResourceViewArray[0]);
-	device->CreateShaderResourceView(renderTargetTextureArray[1], &shaderResourceViewDescDR, &shaderResourceViewArray[1]);
-	device->CreateShaderResourceView(renderTargetTextureArray[2], &shaderResourceViewDescDR, &shaderResourceViewArray[2]);
-	/*for (i = 0; i < 3; i++)
+	//Create SRV's
+	for (i = 0; i < 3; i++)
 	{
 		device->CreateShaderResourceView(renderTargetTextureArray[i], &shaderResourceViewDescDR, &shaderResourceViewArray[i]);
 		
-	}*/
+	}
 
+	//Release render target texture array
 	for (i = 0; i < 3; i++)
 	{
 		renderTargetTextureArray[i]->Release();
 	}
 
+	//Create depth buffer desc
 	D3D11_TEXTURE2D_DESC depthBufferDescDR;
 
 	depthBufferDescDR.Width = width;
@@ -213,15 +216,25 @@ void Game::DeferredSetupInitialize()
 	depthBufferDescDR.CPUAccessFlags = 0;
 	depthBufferDescDR.MiscFlags = 0;
 
-	device->CreateTexture2D(&depthBufferDescDR, NULL, &depthStencilBufferDR);
+	device->CreateTexture2D(&depthBufferDescDR, 0, &depthStencilBufferDR);
 	
+	//Create depth stencil desc
 	D3D11_DEPTH_STENCIL_VIEW_DESC depthStencilViewDescDR;
 
 	depthStencilViewDescDR.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
 	depthStencilViewDescDR.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 	depthStencilViewDescDR.Texture2D.MipSlice = 0;
 
-	device->CreateDepthStencilView(depthStencilBufferDR, &depthStencilViewDescDR, &depthStencilViewDR);
+	//Create depth stencil view
+	device->CreateDepthStencilView(depthStencilBufferDR, 0, &depthStencilViewDR);
+
+	//Setup the viewport for rendering.
+	viewportDR.Width = width;
+	viewportDR.Height = height;
+	viewportDR.MinDepth = 0.0f;
+	viewportDR.MaxDepth = 1.0f;
+	viewportDR.TopLeftX = 0.0f;
+	viewportDR.TopLeftY = 0.0f;
 
 	//context->OMSetRenderTargets(3, renderTargetViewArray, depthStencilViewDR);
 
@@ -404,18 +417,23 @@ void Game::OnResize()
 void Game::Update(float deltaTime, float totalTime)
 {
 	camera->Update(deltaTime);
-	sphereEntities[0]->UpdateWorldMatrix();
+	
 	//Update Spheres
-	/*for (int i = 0; i <= 8; i++)
+	for (int i = 0; i <= 8; i++)
 	{
 		sphereEntities[i]->UpdateWorldMatrix();
-	}*/
+	}
 
 	//Update Flats
-	/*for (int i = 0; i <= 3; i++)
+	for (int i = 0; i <= 3; i++)
 	{
 		flatEntities[i]->UpdateWorldMatrix();
-	}*/
+	}
+
+	//Switch g-buffer
+	if (GetAsyncKeyState('1') & 0x8000) switcher = 1;
+	if (GetAsyncKeyState('2') & 0x8000) switcher = 2;
+	if (GetAsyncKeyState('3') & 0x8000) switcher = 3;
 
 
 	if (GetAsyncKeyState(VK_ESCAPE))
@@ -428,11 +446,6 @@ void Game::Draw(float deltaTime, float totalTime)
 	const float color[4] = { 0.6f, 0.6f, 0.6f, 0.0f };
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
-	// Clear the render target and depth buffer (erases what's on the screen)
-	//  - Do this ONCE PER FRAME
-	//  - At the beginning of Draw (before drawing *anything*)
-	//context->ClearRenderTargetView(backBufferRTV, color);
-	//context->ClearDepthStencilView(depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 	//Render Spheres
 	//for (int i = 0; i <= 8 ; i++) 
@@ -448,44 +461,92 @@ void Game::Draw(float deltaTime, float totalTime)
 
 	render.RenderSkyBox(cubeMesh, vertexBuffer, indexBuffer, skyVertexShader, skyPixelShader, camera, context, skyRasterizerState, skyDepthState, skySRV);*/
 
+//-----------------------------
 	context->OMSetRenderTargets(3, renderTargetViewArray, depthStencilViewDR);
+	context->RSSetViewports(1, &viewportDR);
 
 	context->ClearRenderTargetView(renderTargetViewArray[0], color);
 	context->ClearRenderTargetView(renderTargetViewArray[1], color);
 	context->ClearRenderTargetView(renderTargetViewArray[2], color);
-	
-	//context->ClearDepthStencilView(depthStencilViewDR, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
-	vertexBuffer = sphereEntities[0]->GetMesh()->GetVertexBuffer();
-	indexBuffer = sphereEntities[0]->GetMesh()->GetIndexBuffer();
+	context->ClearDepthStencilView(depthStencilViewDR, D3D11_CLEAR_DEPTH , 1.0f, 0);
 
-	deferredVertexShader->SetMatrix4x4("world", *sphereEntities[0]->GetWorldMatrix());
-	deferredVertexShader->SetMatrix4x4("view", camera->GetView());
-	deferredVertexShader->SetMatrix4x4("projection", camera->GetProjection());
+	for (int i = 0; i <= 3; i++)
+	{
+		vertexBuffer = flatEntities[i]->GetMesh()->GetVertexBuffer();
+		indexBuffer = flatEntities[i]->GetMesh()->GetIndexBuffer();
 
-	deferredVertexShader->CopyAllBufferData();
-	deferredVertexShader->SetShader();
+		deferredVertexShader->SetMatrix4x4("world", *flatEntities[i]->GetWorldMatrix());
+		deferredVertexShader->SetMatrix4x4("view", camera->GetView());
+		deferredVertexShader->SetMatrix4x4("projection", camera->GetProjection());
 
-	deferredPixelShader->SetShaderResourceView("textureSRV", sphereEntities[0]->GetMaterial()->GetMaterialSRV());
-	deferredPixelShader->SetShaderResourceView("normalMapSRV", sphereEntities[0]->GetMaterial()->GetNormalSRV());
-	deferredPixelShader->SetSamplerState("basicSampler", sphereEntities[0]->GetMaterial()->GetMaterialSampler());
+		deferredVertexShader->CopyAllBufferData();
+		deferredVertexShader->SetShader();
 
-	deferredPixelShader->CopyAllBufferData();
-	deferredPixelShader->SetShader();
+		deferredPixelShader->SetShaderResourceView("textureSRV", flatEntities[i]->GetMaterial()->GetMaterialSRV());
+		deferredPixelShader->SetShaderResourceView("normalMapSRV", flatEntities[i]->GetMaterial()->GetNormalSRV());
+		deferredPixelShader->SetSamplerState("basicSampler", flatEntities[i]->GetMaterial()->GetMaterialSampler());
 
-	context->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
-	context->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);
+		deferredPixelShader->CopyAllBufferData();
+		deferredPixelShader->SetShader();
 
-	context->DrawIndexed(sphereEntities[0]->GetMesh()->GetIndexCount(), 0, 0);
+		context->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
+		context->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);
+
+		context->DrawIndexed(flatEntities[i]->GetMesh()->GetIndexCount(), 0, 0);
+	}
+
+	for (int i = 0; i <= 8; i++)
+	{
+		vertexBuffer = sphereEntities[i]->GetMesh()->GetVertexBuffer();
+		indexBuffer = sphereEntities[i]->GetMesh()->GetIndexBuffer();
+
+		deferredVertexShader->SetMatrix4x4("world", *sphereEntities[i]->GetWorldMatrix());
+		deferredVertexShader->SetMatrix4x4("view", camera->GetView());
+		deferredVertexShader->SetMatrix4x4("projection", camera->GetProjection());
+
+		deferredVertexShader->CopyAllBufferData();
+		deferredVertexShader->SetShader();
+
+		deferredPixelShader->SetShaderResourceView("textureSRV", sphereEntities[i]->GetMaterial()->GetMaterialSRV());
+		deferredPixelShader->SetShaderResourceView("normalMapSRV", sphereEntities[i]->GetMaterial()->GetNormalSRV());
+		deferredPixelShader->SetSamplerState("basicSampler", sphereEntities[i]->GetMaterial()->GetMaterialSampler());
+
+		deferredPixelShader->CopyAllBufferData();
+		deferredPixelShader->SetShader();
+
+		context->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
+		context->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);
+
+		context->DrawIndexed(sphereEntities[i]->GetMesh()->GetIndexCount(), 0, 0);
+	}
 //-----------------------------
+	
 	context->OMSetRenderTargets(1, &backBufferRTV, 0);
+	context->RSSetViewports(1, &viewport);
 
 	context->ClearRenderTargetView(backBufferRTV, color);
 	context->ClearDepthStencilView(depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);	
 
+
 	displayVertexShader->SetShader();
 
-	displayPixelShader->SetShaderResourceView("Texture", shaderResourceViewArray[2]);
+	switch (switcher)
+	{
+	case 1:
+		displayPixelShader->SetShaderResourceView("Texture", shaderResourceViewArray[0]);
+		break;
+	case 2:
+		displayPixelShader->SetShaderResourceView("Texture", shaderResourceViewArray[1]);
+		break;
+	case 3:
+		displayPixelShader->SetShaderResourceView("Texture", shaderResourceViewArray[2]);
+		break;
+	default:
+		//displayPixelShader->SetShaderResourceView("Texture", shaderResourceViewArray[0]);
+		break;
+	}
+	//displayPixelShader->SetShaderResourceView("Texture", shaderResourceViewArray[0]);
 	displayPixelShader->SetSamplerState("Sampler", sampler);
 	displayPixelShader->CopyAllBufferData();
 	displayPixelShader->SetShader();
@@ -497,6 +558,9 @@ void Game::Draw(float deltaTime, float totalTime)
 	// Actually draw exactly 3 vertices
 	context->Draw(3, 0);
 	displayPixelShader->SetShaderResourceView("Texture", 0);
+
+	
+
 	swapChain->Present(0, 0);
 }
 

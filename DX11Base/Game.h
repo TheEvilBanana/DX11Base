@@ -44,12 +44,14 @@ private:
 
 
 	//Deferred Rendering Requirements
-	//ID3D11Texture2D* renderTargetTextureArray[3];
+	
 	ID3D11RenderTargetView* renderTargetViewArray[3];
 	ID3D11ShaderResourceView* shaderResourceViewArray[3];
 	ID3D11Texture2D* depthStencilBufferDR;
 	ID3D11DepthStencilView* depthStencilViewDR;
 	D3D11_VIEWPORT viewportDR;
+
+	int switcher;
 
 	SimpleVertexShader* deferredVertexShader;
 	SimplePixelShader* deferredPixelShader;

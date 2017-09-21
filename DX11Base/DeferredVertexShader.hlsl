@@ -22,7 +22,7 @@ struct VertexToPixel
 	float2 uv			: TEXCOORD;
 };
 
-VertexToPixel main(VertexShaderInput input)
+VertexToPixel main(in VertexShaderInput input)
 {
 	VertexToPixel output;
 
