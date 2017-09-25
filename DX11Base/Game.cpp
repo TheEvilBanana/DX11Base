@@ -89,6 +89,11 @@ Game::~Game()
 	//Deferred Stuff release
 	depthStencilBufferDR->Release();
 	depthStencilViewDR->Release();
+	rasterizerDR->Release();
+	blendDR->Release();
+	//depthSRV->Release();
+
+	delete pointLightEntity;
 
 	for (int i = 0; i < 3; i++)
 	{
@@ -99,6 +104,8 @@ Game::~Game()
 
 	delete deferredVertexShader;
 	delete deferredPixelShader;
+	delete lightingPassVertexShader;
+	delete lightingPassPixelShader;
 }
 
 
@@ -163,14 +170,14 @@ void Game::DeferredSetupInitialize()
 
 	// Render target desc for 32bit
 	D3D11_RENDER_TARGET_VIEW_DESC renderTargetViewDesc32;
-	
+	ZeroMemory(&renderTargetViewDesc32, sizeof(renderTargetViewDesc32));
 	renderTargetViewDesc32.Format = textureDescPosNorm.Format;
 	renderTargetViewDesc32.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
 	renderTargetViewDesc32.Texture2D.MipSlice = 0;
 
 	// Render target desc for 8bit
 	D3D11_RENDER_TARGET_VIEW_DESC renderTargetViewDesc8;
-
+	ZeroMemory(&renderTargetViewDesc8, sizeof(renderTargetViewDesc8));
 	renderTargetViewDesc8.Format = textureDescPosNorm.Format;
 	renderTargetViewDesc8.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
 	renderTargetViewDesc8.Texture2D.MipSlice = 0;
@@ -182,7 +189,7 @@ void Game::DeferredSetupInitialize()
 
 	//Creste SRV desc
 	D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDescDR;
-
+	ZeroMemory(&shaderResourceViewDescDR, sizeof(shaderResourceViewDescDR));
 	shaderResourceViewDescDR.Format = textureDescPosNorm.Format;
 	shaderResourceViewDescDR.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 	shaderResourceViewDescDR.Texture2D.MostDetailedMip = 0;
@@ -203,16 +210,17 @@ void Game::DeferredSetupInitialize()
 
 	//Create depth buffer desc
 	D3D11_TEXTURE2D_DESC depthBufferDescDR;
-
+	ZeroMemory(&depthBufferDescDR, sizeof(depthBufferDescDR));
 	depthBufferDescDR.Width = width;
 	depthBufferDescDR.Height = height;
 	depthBufferDescDR.MipLevels = 1;
 	depthBufferDescDR.ArraySize = 1;
-	depthBufferDescDR.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	//depthBufferDescDR.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	depthBufferDescDR.Format = DXGI_FORMAT_R24G8_TYPELESS;
 	depthBufferDescDR.SampleDesc.Count = 1;
 	depthBufferDescDR.SampleDesc.Quality = 0;
 	depthBufferDescDR.Usage = D3D11_USAGE_DEFAULT;
-	depthBufferDescDR.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+	depthBufferDescDR.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
 	depthBufferDescDR.CPUAccessFlags = 0;
 	depthBufferDescDR.MiscFlags = 0;
 
@@ -220,13 +228,24 @@ void Game::DeferredSetupInitialize()
 	
 	//Create depth stencil desc
 	D3D11_DEPTH_STENCIL_VIEW_DESC depthStencilViewDescDR;
-
+	ZeroMemory(&depthStencilViewDescDR, sizeof(depthStencilViewDescDR));
 	depthStencilViewDescDR.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
 	depthStencilViewDescDR.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 	depthStencilViewDescDR.Texture2D.MipSlice = 0;
-
+	
 	//Create depth stencil view
-	device->CreateDepthStencilView(depthStencilBufferDR, 0, &depthStencilViewDR);
+	device->CreateDepthStencilView(depthStencilBufferDR, &depthStencilViewDescDR, &depthStencilViewDR);
+
+
+	/*D3D11_SHADER_RESOURCE_VIEW_DESC depthDescSRV;
+	ZeroMemory(&depthDescSRV, sizeof(depthDescSRV));
+	depthDescSRV.Format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+	depthDescSRV.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	depthDescSRV.Texture2D.MostDetailedMip = 0;
+	depthDescSRV.Texture2D.MipLevels = 1;
+
+	depthSRV = nullptr;
+	device->CreateShaderResourceView(depthStencilBufferDR, &depthDescSRV, &depthSRV);*/
 
 	//Setup the viewport for rendering.
 	viewportDR.Width = width;
@@ -238,12 +257,34 @@ void Game::DeferredSetupInitialize()
 
 	//context->OMSetRenderTargets(3, renderTargetViewArray, depthStencilViewDR);
 
+	// Set up a rasterizer state 
+	D3D11_RASTERIZER_DESC rasterizerDescDR;
+	ZeroMemory(&rasterizerDescDR, sizeof(rasterizerDescDR));
+	rasterizerDescDR.CullMode = D3D11_CULL_NONE;
+	rasterizerDescDR.FillMode = D3D11_FILL_WIREFRAME;
+	rasterizerDescDR.DepthClipEnable = true;
+	device->CreateRasterizerState(&rasterizerDescDR, &rasterizerDR);
+
+	D3D11_BLEND_DESC blendDescDR = {};
+	blendDescDR.AlphaToCoverageEnable = false;
+	blendDescDR.IndependentBlendEnable = false;
+	blendDescDR.RenderTarget[0].BlendEnable = true;
+	blendDescDR.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
+	blendDescDR.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;
+	blendDescDR.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+	blendDescDR.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
+	blendDescDR.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ONE;
+	blendDescDR.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+	blendDescDR.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+
+	device->CreateBlendState(&blendDescDR, &blendDR);
+
 
 }
 
 void Game::CameraInitialize()
 {
-	camera = new Camera(0, 0, -4);
+	camera = new Camera(0, 1, -6);
 	camera->UpdateProjectionMatrix((float)width / height);
 }
 
@@ -280,6 +321,14 @@ void Game::ShadersInitialize()
 	displayPixelShader = new SimplePixelShader(device, context);
 	if (!displayPixelShader->LoadShaderFile(L"Debug/DisplayPixelShader.cso"))
 		displayPixelShader->LoadShaderFile(L"DisplayPixelShader.cso");
+
+	lightingPassVertexShader = new SimpleVertexShader(device, context);
+	if (!lightingPassVertexShader->LoadShaderFile(L"Debug/LightingPassVertexShader.cso"))
+		lightingPassVertexShader->LoadShaderFile(L"LightingPassVertexShader.cso");
+
+	lightingPassPixelShader = new SimplePixelShader(device, context);
+	if (!lightingPassPixelShader->LoadShaderFile(L"Debug/LightingPassPixelShader.cso"))
+		lightingPassPixelShader->LoadShaderFile(L"LightingPassPixelShader.cso");
 
 }
 
@@ -346,6 +395,10 @@ void Game::SkyBoxInitialize()
 void Game::GameEntityInitialize()
 {
 	skyBoxEntity = new GameEntity(cubeMesh, materialSkyBox);
+
+	pointLightEntity = new GameEntity(sphereMesh, NULL);
+	pointLightEntity->SetPosition(1.0f, 0.0f, 0.0f);
+	pointLightEntity->SetScale(2.5f, 2.5f, 2.5f);
 	
 	GameEntity* sphere0 = new GameEntity(sphereMesh, materialCobbleStone);
 	GameEntity* sphere1 = new GameEntity(sphereMesh, materialCobbleStone);
@@ -434,6 +487,7 @@ void Game::Update(float deltaTime, float totalTime)
 	if (GetAsyncKeyState('1') & 0x8000) switcher = 1;
 	if (GetAsyncKeyState('2') & 0x8000) switcher = 2;
 	if (GetAsyncKeyState('3') & 0x8000) switcher = 3;
+	//if (GetAsyncKeyState('4') & 0x8000) switcher = 4;
 
 
 	if (GetAsyncKeyState(VK_ESCAPE))
@@ -542,6 +596,9 @@ void Game::Draw(float deltaTime, float totalTime)
 	case 3:
 		displayPixelShader->SetShaderResourceView("Texture", shaderResourceViewArray[2]);
 		break;
+	/*case 4:
+		displayPixelShader->SetShaderResourceView("Texture", depthSRV);
+		break;*/
 	default:
 		//displayPixelShader->SetShaderResourceView("Texture", shaderResourceViewArray[0]);
 		break;

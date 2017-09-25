@@ -91,14 +91,6 @@ void ComputePointLight(VertexToPixel input, PointLight pointLight, float4 surfac
 	//float3 dirToPointLight = normalize(pointLight.position - input.worldPos);
 	float3 dirToPointLight = pointLight.position - input.worldPos;
 	float dist = length(dirToPointLight);
-	//if (dist > pointLight.range)
-	//{
-	//	//pointL = (0.0f, 0.0f, 0.0f, 0.0f);
-	//	diffuse = (0.0f, 0.0f, 0.0f, 0.0f);
-	//	specular = (0.0f, 0.0f, 0.0f, 0.0f);
-
-	//	return;
-	//}
 	
 	dirToPointLight /= dist;
 	float lightAmountPL = saturate(dot(input.normal, dirToPointLight));

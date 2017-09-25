@@ -51,10 +51,19 @@ private:
 	ID3D11DepthStencilView* depthStencilViewDR;
 	D3D11_VIEWPORT viewportDR;
 
+	ID3D11RasterizerState* rasterizerDR;
+	ID3D11BlendState* blendDR;
+
+	ID3D11ShaderResourceView* depthSRV;
+
 	int switcher;
 
 	SimpleVertexShader* deferredVertexShader;
 	SimplePixelShader* deferredPixelShader;
+	SimpleVertexShader* lightingPassVertexShader;
+	SimplePixelShader* lightingPassPixelShader;
+
+	GameEntity* pointLightEntity;
 
 	// Buffers to hold actual geometry data
 	ID3D11Buffer* vertexBuffer;
@@ -66,7 +75,6 @@ private:
 	SimplePixelShader* basePixelShader;
 	SimpleVertexShader* skyVertexShader;
 	SimplePixelShader* skyPixelShader;
-	SimpleVertexShader* shadowVertexShader;
 	SimpleVertexShader* displayVertexShader;
 	SimplePixelShader* displayPixelShader;
 
