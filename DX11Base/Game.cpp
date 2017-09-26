@@ -262,7 +262,7 @@ void Game::DeferredSetupInitialize()
 	ZeroMemory(&rasterizerDescDR, sizeof(rasterizerDescDR));
 	rasterizerDescDR.CullMode = D3D11_CULL_NONE;
 	rasterizerDescDR.FillMode = D3D11_FILL_SOLID;
-	rasterizerDescDR.DepthClipEnable = true;
+	rasterizerDescDR.DepthClipEnable = false;
 	
 	device->CreateRasterizerState(&rasterizerDescDR, &rasterizerDR);
 
@@ -273,7 +273,7 @@ void Game::DeferredSetupInitialize()
 	blendDescDR.IndependentBlendEnable = false;
 	blendDescDR.RenderTarget[0].BlendEnable = true;
 	blendDescDR.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
-	blendDescDR.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;
+	blendDescDR.RenderTarget[0].DestBlend = D3D11_BLEND_ZERO;
 	blendDescDR.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
 	blendDescDR.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
 	blendDescDR.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ONE;
@@ -401,7 +401,7 @@ void Game::GameEntityInitialize()
 
 	pointLightEntity = new GameEntity(sphereMesh, NULL);
 	pointLightEntity->SetPosition(1.0f, 0.0f, 0.0f);
-	pointLightEntity->SetScale(1.0f, 1.0f, 1.0f);
+	pointLightEntity->SetScale(2.0f, 2.0f, 2.0f);
 	
 	GameEntity* sphere0 = new GameEntity(sphereMesh, materialCobbleStone);
 	GameEntity* sphere1 = new GameEntity(sphereMesh, materialCobbleStone);
@@ -434,10 +434,10 @@ void Game::GameEntityInitialize()
 	sphereEntities[8]->SetPosition(-2, 0, -2);
 
 
-	GameEntity* flat0 = new GameEntity(cubeMesh, materialEmpty);
-	GameEntity* flat1 = new GameEntity(cubeMesh, materialEmpty);
-	GameEntity* flat2 = new GameEntity(cubeMesh, materialEmpty);
-	GameEntity* flat3 = new GameEntity(cubeMesh, materialEmpty);
+	GameEntity* flat0 = new GameEntity(cubeMesh, materialRed);
+	GameEntity* flat1 = new GameEntity(cubeMesh, materialRed);
+	GameEntity* flat2 = new GameEntity(cubeMesh, materialRed);
+	GameEntity* flat3 = new GameEntity(cubeMesh, materialRed);
 	
 	flatEntities.push_back(flat0);
 	flatEntities.push_back(flat1);
@@ -624,21 +624,25 @@ void Game::Draw(float deltaTime, float totalTime)
 	/**/
 //-------------------	
 
-	context->OMSetRenderTargets(1, &backBufferRTV, 0);
+	context->OMSetRenderTargets(1, &backBufferRTV, depthStencilView);
 	context->RSSetViewports(1, &viewport);
-	
+
 	context->ClearRenderTargetView(backBufferRTV, color);
-	//context->ClearDepthStencilView(depthStencilViewDR, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+	context->ClearDepthStencilView(depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 	context->RSSetState(rasterizerDR);
 	float blend[4] = { 1,1,1,1 };
-	//context->OMSetBlendState(blendDR, blend, 0xFFFFFFFF);
+	context->OMSetBlendState(blendDR, blend, 0xFFFFFFFF);
 
 	vertexBuffer = pointLightEntity->GetMesh()->GetVertexBuffer();
 	indexBuffer = pointLightEntity->GetMesh()->GetIndexBuffer();
 
 	context->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
 	context->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);
+
+	lightingPassVertexShader->SetMatrix4x4("world", *pointLightEntity->GetWorldMatrix());
+	lightingPassVertexShader->SetMatrix4x4("view", camera->GetView());
+	lightingPassVertexShader->SetMatrix4x4("projection", camera->GetProjection());
 
 	lightingPassVertexShader->CopyAllBufferData();
 	lightingPassVertexShader->SetShader();
@@ -650,21 +654,19 @@ void Game::Draw(float deltaTime, float totalTime)
 	lightingPassPixelShader->SetSamplerState("basicSampler", sampler);
 
 	lightingPassPixelShader->SetFloat3("cameraPosition", camera->GetPosition());
+
 	lightingPassPixelShader->SetFloat3("lightColor", XMFLOAT3(1.0f, 1.0f, 1.0f));
 	lightingPassPixelShader->SetFloat3("lightPos", pointLightEntity->GetPosition());
-	
-
-
 
 	lightingPassPixelShader->CopyAllBufferData();
 	lightingPassPixelShader->SetShader();
 
 	context->DrawIndexed(pointLightEntity->GetMesh()->GetIndexCount(), 0, 0);
 
-	
 	context->RSSetState(NULL);
-	//context->OMSetBlendState(NULL, blend, 0xFFFFFFFF);
+	context->OMSetBlendState(NULL, blend, 0xFFFFFFFF);
 
+	//--------------------------	
 	swapChain->Present(0, 0);
 }
 
