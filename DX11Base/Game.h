@@ -54,7 +54,7 @@ private:
 	ID3D11RasterizerState* rasterizerDR;
 	ID3D11BlendState* blendDR;
 
-	ID3D11ShaderResourceView* depthSRV;
+	//ID3D11ShaderResourceView* depthSRV;
 
 	int switcher;
 

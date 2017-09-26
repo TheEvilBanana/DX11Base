@@ -257,15 +257,18 @@ void Game::DeferredSetupInitialize()
 
 	//context->OMSetRenderTargets(3, renderTargetViewArray, depthStencilViewDR);
 
-	// Set up a rasterizer state 
+	//Setup rasterizer state 
 	D3D11_RASTERIZER_DESC rasterizerDescDR;
 	ZeroMemory(&rasterizerDescDR, sizeof(rasterizerDescDR));
 	rasterizerDescDR.CullMode = D3D11_CULL_NONE;
-	rasterizerDescDR.FillMode = D3D11_FILL_WIREFRAME;
+	rasterizerDescDR.FillMode = D3D11_FILL_SOLID;
 	rasterizerDescDR.DepthClipEnable = true;
+	
 	device->CreateRasterizerState(&rasterizerDescDR, &rasterizerDR);
 
-	D3D11_BLEND_DESC blendDescDR = {};
+	//Setup blend state 
+	D3D11_BLEND_DESC blendDescDR;
+	ZeroMemory(&blendDescDR, sizeof(blendDescDR));
 	blendDescDR.AlphaToCoverageEnable = false;
 	blendDescDR.IndependentBlendEnable = false;
 	blendDescDR.RenderTarget[0].BlendEnable = true;
@@ -398,7 +401,7 @@ void Game::GameEntityInitialize()
 
 	pointLightEntity = new GameEntity(sphereMesh, NULL);
 	pointLightEntity->SetPosition(1.0f, 0.0f, 0.0f);
-	pointLightEntity->SetScale(2.5f, 2.5f, 2.5f);
+	pointLightEntity->SetScale(1.0f, 1.0f, 1.0f);
 	
 	GameEntity* sphere0 = new GameEntity(sphereMesh, materialCobbleStone);
 	GameEntity* sphere1 = new GameEntity(sphereMesh, materialCobbleStone);
@@ -482,6 +485,8 @@ void Game::Update(float deltaTime, float totalTime)
 	{
 		flatEntities[i]->UpdateWorldMatrix();
 	}
+
+	pointLightEntity->UpdateWorldMatrix();
 
 	//Switch g-buffer
 	if (GetAsyncKeyState('1') & 0x8000) switcher = 1;
@@ -574,14 +579,17 @@ void Game::Draw(float deltaTime, float totalTime)
 
 		context->DrawIndexed(sphereEntities[i]->GetMesh()->GetIndexCount(), 0, 0);
 	}
+
+	/*deferredPixelShader->SetShaderResourceView("textureSRV", 0);
+	deferredPixelShader->SetShaderResourceView("normalMapSRV", 0);
+	deferredPixelShader->SetSamplerState("basicSampler", 0);*/
 //-----------------------------
-	
+/*
 	context->OMSetRenderTargets(1, &backBufferRTV, 0);
 	context->RSSetViewports(1, &viewport);
 
 	context->ClearRenderTargetView(backBufferRTV, color);
 	context->ClearDepthStencilView(depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);	
-
 
 	displayVertexShader->SetShader();
 
@@ -596,14 +604,12 @@ void Game::Draw(float deltaTime, float totalTime)
 	case 3:
 		displayPixelShader->SetShaderResourceView("Texture", shaderResourceViewArray[2]);
 		break;
-	/*case 4:
-		displayPixelShader->SetShaderResourceView("Texture", depthSRV);
-		break;*/
+	//case 4:
+		//displayPixelShader->SetShaderResourceView("Texture", depthSRV);
+		//break;
 	default:
-		//displayPixelShader->SetShaderResourceView("Texture", shaderResourceViewArray[0]);
 		break;
 	}
-	//displayPixelShader->SetShaderResourceView("Texture", shaderResourceViewArray[0]);
 	displayPixelShader->SetSamplerState("Sampler", sampler);
 	displayPixelShader->CopyAllBufferData();
 	displayPixelShader->SetShader();
@@ -615,8 +621,49 @@ void Game::Draw(float deltaTime, float totalTime)
 	// Actually draw exactly 3 vertices
 	context->Draw(3, 0);
 	displayPixelShader->SetShaderResourceView("Texture", 0);
+	/**/
+//-------------------	
+
+	context->OMSetRenderTargets(1, &backBufferRTV, 0);
+	context->RSSetViewports(1, &viewport);
+	
+	context->ClearRenderTargetView(backBufferRTV, color);
+	//context->ClearDepthStencilView(depthStencilViewDR, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+
+	context->RSSetState(rasterizerDR);
+	float blend[4] = { 1,1,1,1 };
+	//context->OMSetBlendState(blendDR, blend, 0xFFFFFFFF);
+
+	vertexBuffer = pointLightEntity->GetMesh()->GetVertexBuffer();
+	indexBuffer = pointLightEntity->GetMesh()->GetIndexBuffer();
+
+	context->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
+	context->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);
+
+	lightingPassVertexShader->CopyAllBufferData();
+	lightingPassVertexShader->SetShader();
+
+	lightingPassPixelShader->SetShaderResourceView("positionGB", shaderResourceViewArray[0]);
+	lightingPassPixelShader->SetShaderResourceView("normalGB", shaderResourceViewArray[1]);
+	lightingPassPixelShader->SetShaderResourceView("diffuseGB", shaderResourceViewArray[2]);
+
+	lightingPassPixelShader->SetSamplerState("basicSampler", sampler);
+
+	lightingPassPixelShader->SetFloat3("cameraPosition", camera->GetPosition());
+	lightingPassPixelShader->SetFloat3("lightColor", XMFLOAT3(1.0f, 1.0f, 1.0f));
+	lightingPassPixelShader->SetFloat3("lightPos", pointLightEntity->GetPosition());
+	
+
+
+
+	lightingPassPixelShader->CopyAllBufferData();
+	lightingPassPixelShader->SetShader();
+
+	context->DrawIndexed(pointLightEntity->GetMesh()->GetIndexCount(), 0, 0);
 
 	
+	context->RSSetState(NULL);
+	//context->OMSetBlendState(NULL, blend, 0xFFFFFFFF);
 
 	swapChain->Present(0, 0);
 }
