@@ -64,7 +64,7 @@ private:
 	SimplePixelShader* lightingPassPixelShader;
 
 	GameEntity* pointLightEntity;
-
+	GameEntity* pointLightEntity2;
 	// Buffers to hold actual geometry data
 	ID3D11Buffer* vertexBuffer;
 	ID3D11Buffer* indexBuffer;
