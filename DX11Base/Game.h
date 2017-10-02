@@ -41,6 +41,7 @@ private:
 	void MaterialsInitialize();
 	void SkyBoxInitialize();
 	void GameEntityInitialize();
+	void LightsInitialize();
 
 
 	//Deferred Rendering Requirements
@@ -63,8 +64,12 @@ private:
 	SimpleVertexShader* lightingPassVertexShader;
 	SimplePixelShader* lightingPassPixelShader;
 
+	SimpleVertexShader* dirLightVertexShader;
+	SimplePixelShader* dirLightPixelShader;
+
 	GameEntity* pointLightEntity;
 	GameEntity* pointLightEntity2;
+	std::vector<GameEntity*> pointLightEntities;
 	// Buffers to hold actual geometry data
 	ID3D11Buffer* vertexBuffer;
 	ID3D11Buffer* indexBuffer;

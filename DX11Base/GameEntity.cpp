@@ -12,6 +12,16 @@ GameEntity::GameEntity(Mesh *entityMesh, Material *entityMaterial)
 	rotation = XMFLOAT3(0, 0, 0);
 	scale = XMFLOAT3(1, 1, 1);
 }
+GameEntity::GameEntity(Mesh *entityMesh, XMFLOAT3 lightEntityColor)
+{
+	this->mesh = entityMesh;
+
+	XMStoreFloat4x4(&worldMatrix, XMMatrixIdentity());
+	position = XMFLOAT3(0, 0, 0);
+	rotation = XMFLOAT3(0, 0, 0);
+	scale = XMFLOAT3(1, 1, 1);
+	lightColor = lightEntityColor;
+}
 
 
 GameEntity::~GameEntity()
@@ -33,5 +43,10 @@ void GameEntity::UpdateWorldMatrix()
 XMFLOAT3 GameEntity::GetPosition()
 {
 	return position;
+}
+
+XMFLOAT3 GameEntity::GetLightColor()
+{
+	return lightColor;
 }
 

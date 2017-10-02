@@ -103,10 +103,14 @@ Game::~Game()
 		
 	}
 
+	for (auto& pLE : pointLightEntities) delete pLE;
+
 	delete deferredVertexShader;
 	delete deferredPixelShader;
 	delete lightingPassVertexShader;
 	delete lightingPassPixelShader;
+	delete dirLightVertexShader;
+	delete dirLightPixelShader;
 }
 
 
@@ -121,6 +125,7 @@ void Game::Init()
 	MaterialsInitialize();
 	SkyBoxInitialize();
 	GameEntityInitialize();
+	LightsInitialize();
 
 	switcher = 1;
 	// Tell the input assembler stage of the pipeline what kind of
@@ -324,6 +329,14 @@ void Game::ShadersInitialize()
 	if (!lightingPassPixelShader->LoadShaderFile(L"Debug/LightingPassPixelShader.cso"))
 		lightingPassPixelShader->LoadShaderFile(L"LightingPassPixelShader.cso");
 
+	dirLightVertexShader = new SimpleVertexShader(device, context);
+	if (!dirLightVertexShader->LoadShaderFile(L"Debug/DirLightVertexShader.cso"))
+		dirLightVertexShader->LoadShaderFile(L"DirLightVertexShader.cso");
+
+	dirLightPixelShader = new SimplePixelShader(device, context);
+	if (!dirLightPixelShader->LoadShaderFile(L"Debug/DirLightPixelShader.cso"))
+		dirLightPixelShader->LoadShaderFile(L"DirLightPixelShader.cso");
+
 }
 
 void Game::ModelsInitialize()
@@ -389,14 +402,6 @@ void Game::SkyBoxInitialize()
 void Game::GameEntityInitialize()
 {
 	skyBoxEntity = new GameEntity(cubeMesh, materialSkyBox);
-
-	pointLightEntity = new GameEntity(sphereMesh, NULL);
-	pointLightEntity->SetPosition(1.0f, 0.0f, 0.5f);
-	pointLightEntity->SetScale(2.0f, 2.0f, 2.0f);
-
-	pointLightEntity2 = new GameEntity(sphereMesh, NULL);
-	pointLightEntity2->SetPosition(1.0f, 0.0f, -0.5f);
-	pointLightEntity2->SetScale(2.0f, 2.0f, 2.0f);
 	
 	GameEntity* sphere0 = new GameEntity(sphereMesh, materialCobbleStone);
 	GameEntity* sphere1 = new GameEntity(sphereMesh, materialCobbleStone);
@@ -454,6 +459,60 @@ void Game::GameEntityInitialize()
 	flatEntities[3]->SetRotation(0, 0, 1.6f);
 }
 
+void Game::LightsInitialize()
+{
+	pointLightEntity = new GameEntity(sphereMesh, XMFLOAT3(1.0f, 0.0f, 0.0f));
+	pointLightEntity->SetPosition(1.0f, 0.0f, 0.5f);
+	pointLightEntity->SetScale(2.0f, 2.0f, 2.0f);
+
+	pointLightEntity2 = new GameEntity(sphereMesh, XMFLOAT3(0.0f, 0.0f, 1.0f));
+	pointLightEntity2->SetPosition(1.0f, 0.0f, -0.5f);
+	pointLightEntity2->SetScale(2.0f, 2.0f, 2.0f);
+
+	GameEntity* light0 = new GameEntity(sphereMesh, XMFLOAT3(0.0f, 0.0f, 1.0f));
+	GameEntity* light1 = new GameEntity(sphereMesh, XMFLOAT3(0.0f, 1.0f, 0.0f));
+	GameEntity* light2 = new GameEntity(sphereMesh, XMFLOAT3(1.0f, 0.0f, 0.0f));
+	GameEntity* light3 = new GameEntity(sphereMesh, XMFLOAT3(0.6f, 0.0f, 0.4f));
+	GameEntity* light4 = new GameEntity(sphereMesh, XMFLOAT3(0.1f, 0.9f, 0.1f));
+	GameEntity* light5 = new GameEntity(sphereMesh, XMFLOAT3(0.8f, 0.2f, 0.0f));
+	GameEntity* light6 = new GameEntity(sphereMesh, XMFLOAT3(0.0f, 0.3f, 0.8f));
+	GameEntity* light7 = new GameEntity(sphereMesh, XMFLOAT3(0.9f, 0.3f, 0.3f));
+	GameEntity* light8 = new GameEntity(sphereMesh, XMFLOAT3(0.2f, 0.7f, 0.3f));
+	GameEntity* light9 = new GameEntity(sphereMesh, XMFLOAT3(0.1f, 0.0f, 0.8f));
+	GameEntity* light10 = new GameEntity(sphereMesh, XMFLOAT3(0.9f, 0.0f, 0.3f));
+	GameEntity* light11 = new GameEntity(sphereMesh, XMFLOAT3(0.0f, 0.8f, 0.3f));
+	
+	pointLightEntities.push_back(light0);
+	pointLightEntities.push_back(light1);
+	pointLightEntities.push_back(light2);
+	pointLightEntities.push_back(light3);
+	pointLightEntities.push_back(light4);
+	pointLightEntities.push_back(light5);
+	pointLightEntities.push_back(light6);
+	pointLightEntities.push_back(light7);
+	pointLightEntities.push_back(light8);
+	pointLightEntities.push_back(light9);
+	pointLightEntities.push_back(light10);
+	pointLightEntities.push_back(light11);
+
+
+	for (auto& pLE : pointLightEntities) pLE->SetScale(2.0f, 2.0f, 2.0f);
+
+	pointLightEntities[0]->SetPosition(2.0f, 0.0f, 0.0f);
+	pointLightEntities[1]->SetPosition(-2.0f, 0.0f, 0.0f);
+	pointLightEntities[2]->SetPosition(0.0f, 0.0f, 2.0f);
+	pointLightEntities[3]->SetPosition(0.0f, 0.0f, -2.0f);
+	pointLightEntities[4]->SetPosition(0.0f, 0.0f, -4.0f);
+	pointLightEntities[5]->SetPosition(4.0f, 0.0f, -4.0f);
+	pointLightEntities[6]->SetPosition(4.0f, 0.0f, 0.0f);
+	pointLightEntities[7]->SetPosition(4.0f, 0.0f, 4.0f);
+	pointLightEntities[8]->SetPosition(0.0f, 0.0f, 4.0f);
+	pointLightEntities[9]->SetPosition(-4.0f, 0.0f, 4.0f);
+	pointLightEntities[10]->SetPosition(-4.0f, 0.0f, 0.0f);
+	pointLightEntities[11]->SetPosition(-4.0f, 0.0f, -4.0f);
+
+}
+
 void Game::OnResize()
 {
 	// Handle base-level DX resize stuff
@@ -483,11 +542,11 @@ void Game::Update(float deltaTime, float totalTime)
 
 	pointLightEntity->UpdateWorldMatrix();
 	pointLightEntity2->UpdateWorldMatrix();
-
+	for (auto& pLE : pointLightEntities) pLE->UpdateWorldMatrix();
 	//Switch g-buffer
-	if (GetAsyncKeyState('1') & 0x8000) switcher = 1;
+	/*if (GetAsyncKeyState('1') & 0x8000) switcher = 1;
 	if (GetAsyncKeyState('2') & 0x8000) switcher = 2;
-	if (GetAsyncKeyState('3') & 0x8000) switcher = 3;
+	if (GetAsyncKeyState('3') & 0x8000) switcher = 3;*/
 	//if (GetAsyncKeyState('4') & 0x8000) switcher = 4;
 
 
@@ -528,57 +587,14 @@ void Game::Draw(float deltaTime, float totalTime)
 
 	for (int i = 0; i <= 3; i++)
 	{
-		vertexBuffer = flatEntities[i]->GetMesh()->GetVertexBuffer();
-		indexBuffer = flatEntities[i]->GetMesh()->GetIndexBuffer();
-
-		deferredVertexShader->SetMatrix4x4("world", *flatEntities[i]->GetWorldMatrix());
-		deferredVertexShader->SetMatrix4x4("view", camera->GetView());
-		deferredVertexShader->SetMatrix4x4("projection", camera->GetProjection());
-
-		deferredVertexShader->CopyAllBufferData();
-		deferredVertexShader->SetShader();
-
-		deferredPixelShader->SetShaderResourceView("textureSRV", flatEntities[i]->GetMaterial()->GetMaterialSRV());
-		deferredPixelShader->SetShaderResourceView("normalMapSRV", flatEntities[i]->GetMaterial()->GetNormalSRV());
-		deferredPixelShader->SetSamplerState("basicSampler", flatEntities[i]->GetMaterial()->GetMaterialSampler());
-
-		deferredPixelShader->CopyAllBufferData();
-		deferredPixelShader->SetShader();
-
-		context->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
-		context->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);
-
-		context->DrawIndexed(flatEntities[i]->GetMesh()->GetIndexCount(), 0, 0);
+		render.RenderGBuffer(flatEntities[i], vertexBuffer, indexBuffer, deferredVertexShader, deferredPixelShader, camera, context);
 	}
 
 	for (int i = 0; i <= 8; i++)
 	{
-		vertexBuffer = sphereEntities[i]->GetMesh()->GetVertexBuffer();
-		indexBuffer = sphereEntities[i]->GetMesh()->GetIndexBuffer();
-
-		deferredVertexShader->SetMatrix4x4("world", *sphereEntities[i]->GetWorldMatrix());
-		deferredVertexShader->SetMatrix4x4("view", camera->GetView());
-		deferredVertexShader->SetMatrix4x4("projection", camera->GetProjection());
-
-		deferredVertexShader->CopyAllBufferData();
-		deferredVertexShader->SetShader();
-
-		deferredPixelShader->SetShaderResourceView("textureSRV", sphereEntities[i]->GetMaterial()->GetMaterialSRV());
-		deferredPixelShader->SetShaderResourceView("normalMapSRV", sphereEntities[i]->GetMaterial()->GetNormalSRV());
-		deferredPixelShader->SetSamplerState("basicSampler", sphereEntities[i]->GetMaterial()->GetMaterialSampler());
-
-		deferredPixelShader->CopyAllBufferData();
-		deferredPixelShader->SetShader();
-
-		context->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
-		context->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);
-
-		context->DrawIndexed(sphereEntities[i]->GetMesh()->GetIndexCount(), 0, 0);
+		render.RenderGBuffer(sphereEntities[i], vertexBuffer, indexBuffer, deferredVertexShader, deferredPixelShader, camera, context);
 	}
 
-	/*deferredPixelShader->SetShaderResourceView("textureSRV", 0);
-	deferredPixelShader->SetShaderResourceView("normalMapSRV", 0);
-	deferredPixelShader->SetSamplerState("basicSampler", 0);*/
 //-----------------------------
 /*
 	context->OMSetRenderTargets(1, &backBufferRTV, 0);
@@ -630,65 +646,33 @@ void Game::Draw(float deltaTime, float totalTime)
 	float blend[4] = { 1,1,1,1 };
 	context->OMSetBlendState(blendDR, blend, 0xFFFFFFFF);
 
+	render.RenderLights(pointLightEntity, vertexBuffer, indexBuffer, lightingPassVertexShader, lightingPassPixelShader, camera, context, sampler, shaderResourceViewArray[0], shaderResourceViewArray[1], shaderResourceViewArray[2]);
+
+	render.RenderLights(pointLightEntity2, vertexBuffer, indexBuffer, lightingPassVertexShader, lightingPassPixelShader, camera, context, sampler, shaderResourceViewArray[0], shaderResourceViewArray[1], shaderResourceViewArray[2]);
+
+	//for (auto& pLE : pointLightEntities)
+		//render.RenderLights(pLE, vertexBuffer, indexBuffer, lightingPassVertexShader, lightingPassPixelShader, camera, context, sampler, shaderResourceViewArray[0], shaderResourceViewArray[1], shaderResourceViewArray[2]);
+
+//----------------DirLightPassTry
+
+	/*ID3D11Buffer* nothing = 0;
+	context->IASetVertexBuffers(0, 1, &nothing, &stride, &offset);
+	context->IASetIndexBuffer(0, DXGI_FORMAT_R32_UINT, 0);
 	
-	vertexBuffer = pointLightEntity->GetMesh()->GetVertexBuffer();
-	indexBuffer = pointLightEntity->GetMesh()->GetIndexBuffer();
+	dirLightVertexShader->SetShader();
 
-	context->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
-	context->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);
+	dirLightPixelShader->SetShaderResourceView("positionGB", shaderResourceViewArray[0]);
+	dirLightPixelShader->SetShaderResourceView("normalGB", shaderResourceViewArray[1]);
+	dirLightPixelShader->SetShaderResourceView("diffuseGB", shaderResourceViewArray[2]);
 
-	lightingPassVertexShader->SetMatrix4x4("world", *pointLightEntity->GetWorldMatrix());
-	lightingPassVertexShader->SetMatrix4x4("view", camera->GetView());
-	lightingPassVertexShader->SetMatrix4x4("projection", camera->GetProjection());
+	dirLightPixelShader->SetFloat3("lightColor", XMFLOAT3(1.0f, 1.0f, 1.0f));
+	dirLightPixelShader->SetFloat3("lightDir", XMFLOAT3(10.0f, 0.0f, 0.0f));
 
-	lightingPassVertexShader->CopyAllBufferData();
-	lightingPassVertexShader->SetShader();
+	dirLightPixelShader->CopyAllBufferData();
+	dirLightPixelShader->SetShader();
 
-	lightingPassPixelShader->SetShaderResourceView("positionGB", shaderResourceViewArray[0]);
-	lightingPassPixelShader->SetShaderResourceView("normalGB", shaderResourceViewArray[1]);
-	lightingPassPixelShader->SetShaderResourceView("diffuseGB", shaderResourceViewArray[2]);
-
-	lightingPassPixelShader->SetSamplerState("basicSampler", sampler);
-
-	lightingPassPixelShader->SetFloat3("cameraPosition", camera->GetPosition());
-
-	lightingPassPixelShader->SetFloat3("lightColor", XMFLOAT3(1.0f, 0.0f, 0.0f));
-	lightingPassPixelShader->SetFloat3("lightPos", pointLightEntity->GetPosition());
-
-	lightingPassPixelShader->CopyAllBufferData();
-	lightingPassPixelShader->SetShader();
-
-	context->DrawIndexed(pointLightEntity->GetMesh()->GetIndexCount(), 0, 0);
-
-	
-	vertexBuffer = pointLightEntity2->GetMesh()->GetVertexBuffer();
-	indexBuffer = pointLightEntity2->GetMesh()->GetIndexBuffer();
-
-	context->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
-	context->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);
-
-	lightingPassVertexShader->SetMatrix4x4("world", *pointLightEntity2->GetWorldMatrix());
-	lightingPassVertexShader->SetMatrix4x4("view", camera->GetView());
-	lightingPassVertexShader->SetMatrix4x4("projection", camera->GetProjection());
-
-	lightingPassVertexShader->CopyAllBufferData();
-	lightingPassVertexShader->SetShader();
-
-	lightingPassPixelShader->SetShaderResourceView("positionGB", shaderResourceViewArray[0]);
-	lightingPassPixelShader->SetShaderResourceView("normalGB", shaderResourceViewArray[1]);
-	lightingPassPixelShader->SetShaderResourceView("diffuseGB", shaderResourceViewArray[2]);
-
-	lightingPassPixelShader->SetSamplerState("basicSampler", sampler);
-
-	lightingPassPixelShader->SetFloat3("cameraPosition", camera->GetPosition());
-
-	lightingPassPixelShader->SetFloat3("lightColor", XMFLOAT3(0.0f, 0.0f, 1.0f));
-	lightingPassPixelShader->SetFloat3("lightPos", pointLightEntity2->GetPosition());
-
-	lightingPassPixelShader->CopyAllBufferData();
-	lightingPassPixelShader->SetShader();
-
-	context->DrawIndexed(pointLightEntity2->GetMesh()->GetIndexCount(), 0, 0);
+	context->Draw(4, 0);*/
+//-----------------
 
 //---------------
 	context->RSSetState(NULL);

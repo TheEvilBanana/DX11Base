@@ -13,6 +13,7 @@ class GameEntity
 {
 public:
 	GameEntity(Mesh *entityMesh, Material *entityMaterial);
+	GameEntity(Mesh *entityMesh, XMFLOAT3 lightEntityColor);
 	~GameEntity();
 
 	void UpdateWorldMatrix();
@@ -25,6 +26,7 @@ public:
 	void SetScale(float x, float y, float z) { scale.x = x;		scale.y = y;		scale.z = z; }
 
 	XMFLOAT3 GetPosition();
+	XMFLOAT3 GetLightColor();
 
 	Mesh* GetMesh() { return mesh; }
 	Material* GetMaterial() { return material; }
@@ -39,5 +41,6 @@ private:
 	XMFLOAT3 position;
 	XMFLOAT3 rotation;
 	XMFLOAT3 scale;
+	XMFLOAT3 lightColor;
 };
 

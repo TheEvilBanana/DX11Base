@@ -90,6 +90,63 @@ void Render::RenderSkyBox(Mesh* &mesh, ID3D11Buffer* &vertexBuffer, ID3D11Buffer
 	context->OMSetDepthStencilState(0, 0);
 }
 
+void Render::RenderGBuffer(GameEntity* &gameEntity, ID3D11Buffer* &vertexBuffer, ID3D11Buffer* &indexBuffer, SimpleVertexShader* &vertexShader, SimplePixelShader* &pixelShader, Camera* &camera, ID3D11DeviceContext* &context)
+{
+	vertexBuffer = gameEntity->GetMesh()->GetVertexBuffer();
+	indexBuffer = gameEntity->GetMesh()->GetIndexBuffer();
+
+	vertexShader->SetMatrix4x4("world", *gameEntity->GetWorldMatrix());
+	vertexShader->SetMatrix4x4("view", camera->GetView());
+	vertexShader->SetMatrix4x4("projection", camera->GetProjection());
+
+	vertexShader->CopyAllBufferData();
+	vertexShader->SetShader();
+
+	pixelShader->SetShaderResourceView("textureSRV", gameEntity->GetMaterial()->GetMaterialSRV());
+	pixelShader->SetShaderResourceView("normalMapSRV", gameEntity->GetMaterial()->GetNormalSRV());
+	pixelShader->SetSamplerState("basicSampler", gameEntity->GetMaterial()->GetMaterialSampler());
+
+	pixelShader->CopyAllBufferData();
+	pixelShader->SetShader();
+
+	context->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
+	context->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);
+
+	context->DrawIndexed(gameEntity->GetMesh()->GetIndexCount(), 0, 0);
+}
+
+void Render::RenderLights(GameEntity* &gameEntity, ID3D11Buffer* &vertexBuffer, ID3D11Buffer* &indexBuffer, SimpleVertexShader* &vertexShader, SimplePixelShader* &pixelShader, Camera* &camera, ID3D11DeviceContext* &context, ID3D11SamplerState* &sampler, ID3D11ShaderResourceView* &positionGBuffer, ID3D11ShaderResourceView* &normalGBuffer, ID3D11ShaderResourceView* &diffuseGBuffer)
+{
+	vertexBuffer = gameEntity->GetMesh()->GetVertexBuffer();
+	indexBuffer = gameEntity->GetMesh()->GetIndexBuffer();
+
+	context->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
+	context->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);
+
+	vertexShader->SetMatrix4x4("world", *gameEntity->GetWorldMatrix());
+	vertexShader->SetMatrix4x4("view", camera->GetView());
+	vertexShader->SetMatrix4x4("projection", camera->GetProjection());
+
+	vertexShader->CopyAllBufferData();
+	vertexShader->SetShader();
+
+	pixelShader->SetShaderResourceView("positionGB", positionGBuffer);
+	pixelShader->SetShaderResourceView("normalGB", normalGBuffer);
+	pixelShader->SetShaderResourceView("diffuseGB", diffuseGBuffer);
+
+	pixelShader->SetSamplerState("basicSampler", sampler);
+
+	pixelShader->SetFloat3("cameraPosition", camera->GetPosition());
+
+	pixelShader->SetFloat3("lightColor", gameEntity->GetLightColor());
+	pixelShader->SetFloat3("lightPos", gameEntity->GetPosition());
+
+	pixelShader->CopyAllBufferData();
+	pixelShader->SetShader();
+
+	context->DrawIndexed(gameEntity->GetMesh()->GetIndexCount(), 0, 0);
+}
+
 void Render::SetLights()
 {
 	dirLight_1.SetLightValues(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT3(10.0f, 0.0f, 0.0f), 0.0f);
