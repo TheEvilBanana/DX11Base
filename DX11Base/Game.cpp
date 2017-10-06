@@ -91,6 +91,7 @@ Game::~Game()
 	depthStencilViewDR->Release();
 	rasterizerDR->Release();
 	blendDR->Release();
+	depthStateDR->Release();
 	//depthSRV->Release();
 
 	delete pointLightEntity1;
@@ -284,6 +285,15 @@ void Game::DeferredSetupInitialize()
 
 	//TODO : DEPTH STENCIL STATE
 	//TODO : Set the OMdepthstate also change depth target in Set Render target
+
+	D3D11_DEPTH_STENCIL_DESC depthStencilDescDR = {};
+	depthStencilDescDR.DepthEnable = true;
+	depthStencilDescDR.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
+	depthStencilDescDR.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
+	device->CreateDepthStencilState(&depthStencilDescDR, &depthStateDR);
+
+
+
 }
 
 void Game::CameraInitialize()
@@ -468,35 +478,35 @@ void Game::LightsInitialize()
 {
 	pointLightEntity1 = new GameEntity(sphereMesh, XMFLOAT3(1.0f, 0.0f, 0.0f));
 	pointLightEntity1->SetPosition(1.0f, 0.0f, 2.5f);
-	pointLightEntity1->SetScale(2.0f, 2.0f, 2.0f);
+	pointLightEntity1->SetScale(3.0f, 3.0f, 3.0f);
 
 	pointLightEntity2 = new GameEntity(sphereMesh, XMFLOAT3(0.0f, 0.0f, 1.0f));
 	pointLightEntity2->SetPosition(1.0f, 0.0f, 0.5f);
-	pointLightEntity2->SetScale(2.0f, 2.0f, 2.0f);
+	pointLightEntity2->SetScale(3.0f, 3.0f, 3.0f);
 
 	pointLightEntity3 = new GameEntity(sphereMesh, XMFLOAT3(0.0f, 1.0f, 0.0f));
 	pointLightEntity3->SetPosition(1.0f, 0.0f, -0.5f);
-	pointLightEntity3->SetScale(2.0f, 2.0f, 2.0f);
+	pointLightEntity3->SetScale(3.0f, 3.0f, 3.0f);
 
 	pointLightEntity4 = new GameEntity(sphereMesh, XMFLOAT3(0.6f, 0.6f, 0.0f));
 	pointLightEntity4->SetPosition(1.0f, 0.0f, -2.5f);
-	pointLightEntity4->SetScale(2.0f, 2.0f, 2.0f);
+	pointLightEntity4->SetScale(3.0f, 3.0f, 3.0f);
 
 	pointLightEntity5 = new GameEntity(sphereMesh, XMFLOAT3(0.0f, 0.6f, 0.6f));
 	pointLightEntity5->SetPosition(-1.0f, 0.0f, 2.5f);
-	pointLightEntity5->SetScale(2.0f, 2.0f, 2.0f);
+	pointLightEntity5->SetScale(3.0f, 3.0f, 3.0f);
 
 	pointLightEntity6 = new GameEntity(sphereMesh, XMFLOAT3(1.0f, 0.0f, 1.0f));
 	pointLightEntity6->SetPosition(-1.0f, 0.0f, 0.5f);
-	pointLightEntity6->SetScale(2.0f, 2.0f, 2.0f);
+	pointLightEntity6->SetScale(3.0f, 3.0f, 3.0f);
 
 	pointLightEntity7 = new GameEntity(sphereMesh, XMFLOAT3(0.0f, 0.2f, 0.7f));
 	pointLightEntity7->SetPosition(-1.0f, 0.0f, -0.5f);
-	pointLightEntity7->SetScale(2.0f, 2.0f, 2.0f);
+	pointLightEntity7->SetScale(3.0f, 3.0f, 3.0f);
 
 	pointLightEntity8 = new GameEntity(sphereMesh, XMFLOAT3(0.1f, 0.8f, 0.0f));
 	pointLightEntity8->SetPosition(-1.0f, 0.0f, -2.5f);
-	pointLightEntity8->SetScale(2.0f, 2.0f, 2.0f);
+	pointLightEntity8->SetScale(3.0f, 3.0f, 3.0f);
 
 	
 
@@ -641,6 +651,7 @@ void Game::Draw(float deltaTime, float totalTime)
 	context->RSSetState(rasterizerDR);
 	float blend[4] = { 1,1,1,1 };
 	context->OMSetBlendState(blendDR, blend, 0xFFFFFFFF);
+	context->OMSetDepthStencilState(depthStateDR, 0);
 
 	render.RenderLights(pointLightEntity1, vertexBuffer, indexBuffer, lightingPassVertexShader, lightingPassPixelShader, camera, context, sampler, shaderResourceViewArray[0], shaderResourceViewArray[1], shaderResourceViewArray[2]);
 
@@ -684,6 +695,7 @@ void Game::Draw(float deltaTime, float totalTime)
 //---------------
 	context->RSSetState(NULL);
 	context->OMSetBlendState(NULL, blend, 0xFFFFFFFF);
+	context->OMSetDepthStencilState(NULL, 0);
 //--------------------------	
 	swapChain->Present(0, 0);
 }

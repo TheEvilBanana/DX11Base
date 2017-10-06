@@ -50,6 +50,7 @@ private:
 	ID3D11ShaderResourceView* shaderResourceViewArray[3];
 	ID3D11Texture2D* depthStencilBufferDR;
 	ID3D11DepthStencilView* depthStencilViewDR;
+	ID3D11DepthStencilState* depthStateDR;
 	D3D11_VIEWPORT viewportDR;
 
 	ID3D11RasterizerState* rasterizerDR;
