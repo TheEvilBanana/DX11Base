@@ -93,8 +93,14 @@ Game::~Game()
 	blendDR->Release();
 	//depthSRV->Release();
 
-	delete pointLightEntity;
+	delete pointLightEntity1;
 	delete pointLightEntity2;
+	delete pointLightEntity3;
+	delete pointLightEntity4;
+	delete pointLightEntity5;
+	delete pointLightEntity6;
+	delete pointLightEntity7;
+	delete pointLightEntity8;
 
 	for (int i = 0; i < 3; i++)
 	{
@@ -102,8 +108,6 @@ Game::~Game()
 		renderTargetViewArray[i]->Release();
 		
 	}
-
-	for (auto& pLE : pointLightEntities) delete pLE;
 
 	delete deferredVertexShader;
 	delete deferredPixelShader;
@@ -278,7 +282,8 @@ void Game::DeferredSetupInitialize()
 
 	device->CreateBlendState(&blendDescDR, &blendDR);
 
-
+	//TODO : DEPTH STENCIL STATE
+	//TODO : Set the OMdepthstate also change depth target in Set Render target
 }
 
 void Game::CameraInitialize()
@@ -461,55 +466,39 @@ void Game::GameEntityInitialize()
 
 void Game::LightsInitialize()
 {
-	pointLightEntity = new GameEntity(sphereMesh, XMFLOAT3(1.0f, 0.0f, 0.0f));
-	pointLightEntity->SetPosition(1.0f, 0.0f, 0.5f);
-	pointLightEntity->SetScale(2.0f, 2.0f, 2.0f);
+	pointLightEntity1 = new GameEntity(sphereMesh, XMFLOAT3(1.0f, 0.0f, 0.0f));
+	pointLightEntity1->SetPosition(1.0f, 0.0f, 2.5f);
+	pointLightEntity1->SetScale(2.0f, 2.0f, 2.0f);
 
 	pointLightEntity2 = new GameEntity(sphereMesh, XMFLOAT3(0.0f, 0.0f, 1.0f));
-	pointLightEntity2->SetPosition(1.0f, 0.0f, -0.5f);
+	pointLightEntity2->SetPosition(1.0f, 0.0f, 0.5f);
 	pointLightEntity2->SetScale(2.0f, 2.0f, 2.0f);
 
-	GameEntity* light0 = new GameEntity(sphereMesh, XMFLOAT3(0.0f, 0.0f, 1.0f));
-	GameEntity* light1 = new GameEntity(sphereMesh, XMFLOAT3(0.0f, 1.0f, 0.0f));
-	GameEntity* light2 = new GameEntity(sphereMesh, XMFLOAT3(1.0f, 0.0f, 0.0f));
-	GameEntity* light3 = new GameEntity(sphereMesh, XMFLOAT3(0.6f, 0.0f, 0.4f));
-	GameEntity* light4 = new GameEntity(sphereMesh, XMFLOAT3(0.1f, 0.9f, 0.1f));
-	GameEntity* light5 = new GameEntity(sphereMesh, XMFLOAT3(0.8f, 0.2f, 0.0f));
-	GameEntity* light6 = new GameEntity(sphereMesh, XMFLOAT3(0.0f, 0.3f, 0.8f));
-	GameEntity* light7 = new GameEntity(sphereMesh, XMFLOAT3(0.9f, 0.3f, 0.3f));
-	GameEntity* light8 = new GameEntity(sphereMesh, XMFLOAT3(0.2f, 0.7f, 0.3f));
-	GameEntity* light9 = new GameEntity(sphereMesh, XMFLOAT3(0.1f, 0.0f, 0.8f));
-	GameEntity* light10 = new GameEntity(sphereMesh, XMFLOAT3(0.9f, 0.0f, 0.3f));
-	GameEntity* light11 = new GameEntity(sphereMesh, XMFLOAT3(0.0f, 0.8f, 0.3f));
+	pointLightEntity3 = new GameEntity(sphereMesh, XMFLOAT3(0.0f, 1.0f, 0.0f));
+	pointLightEntity3->SetPosition(1.0f, 0.0f, -0.5f);
+	pointLightEntity3->SetScale(2.0f, 2.0f, 2.0f);
+
+	pointLightEntity4 = new GameEntity(sphereMesh, XMFLOAT3(0.6f, 0.6f, 0.0f));
+	pointLightEntity4->SetPosition(1.0f, 0.0f, -2.5f);
+	pointLightEntity4->SetScale(2.0f, 2.0f, 2.0f);
+
+	pointLightEntity5 = new GameEntity(sphereMesh, XMFLOAT3(0.0f, 0.6f, 0.6f));
+	pointLightEntity5->SetPosition(-1.0f, 0.0f, 2.5f);
+	pointLightEntity5->SetScale(2.0f, 2.0f, 2.0f);
+
+	pointLightEntity6 = new GameEntity(sphereMesh, XMFLOAT3(1.0f, 0.0f, 1.0f));
+	pointLightEntity6->SetPosition(-1.0f, 0.0f, 0.5f);
+	pointLightEntity6->SetScale(2.0f, 2.0f, 2.0f);
+
+	pointLightEntity7 = new GameEntity(sphereMesh, XMFLOAT3(0.0f, 0.2f, 0.7f));
+	pointLightEntity7->SetPosition(-1.0f, 0.0f, -0.5f);
+	pointLightEntity7->SetScale(2.0f, 2.0f, 2.0f);
+
+	pointLightEntity8 = new GameEntity(sphereMesh, XMFLOAT3(0.1f, 0.8f, 0.0f));
+	pointLightEntity8->SetPosition(-1.0f, 0.0f, -2.5f);
+	pointLightEntity8->SetScale(2.0f, 2.0f, 2.0f);
+
 	
-	pointLightEntities.push_back(light0);
-	pointLightEntities.push_back(light1);
-	pointLightEntities.push_back(light2);
-	pointLightEntities.push_back(light3);
-	pointLightEntities.push_back(light4);
-	pointLightEntities.push_back(light5);
-	pointLightEntities.push_back(light6);
-	pointLightEntities.push_back(light7);
-	pointLightEntities.push_back(light8);
-	pointLightEntities.push_back(light9);
-	pointLightEntities.push_back(light10);
-	pointLightEntities.push_back(light11);
-
-
-	for (auto& pLE : pointLightEntities) pLE->SetScale(2.0f, 2.0f, 2.0f);
-
-	pointLightEntities[0]->SetPosition(2.0f, 0.0f, 0.0f);
-	pointLightEntities[1]->SetPosition(-2.0f, 0.0f, 0.0f);
-	pointLightEntities[2]->SetPosition(0.0f, 0.0f, 2.0f);
-	pointLightEntities[3]->SetPosition(0.0f, 0.0f, -2.0f);
-	pointLightEntities[4]->SetPosition(0.0f, 0.0f, -4.0f);
-	pointLightEntities[5]->SetPosition(4.0f, 0.0f, -4.0f);
-	pointLightEntities[6]->SetPosition(4.0f, 0.0f, 0.0f);
-	pointLightEntities[7]->SetPosition(4.0f, 0.0f, 4.0f);
-	pointLightEntities[8]->SetPosition(0.0f, 0.0f, 4.0f);
-	pointLightEntities[9]->SetPosition(-4.0f, 0.0f, 4.0f);
-	pointLightEntities[10]->SetPosition(-4.0f, 0.0f, 0.0f);
-	pointLightEntities[11]->SetPosition(-4.0f, 0.0f, -4.0f);
 
 }
 
@@ -540,9 +529,16 @@ void Game::Update(float deltaTime, float totalTime)
 		flatEntities[i]->UpdateWorldMatrix();
 	}
 
-	pointLightEntity->UpdateWorldMatrix();
+	pointLightEntity1->UpdateWorldMatrix();
 	pointLightEntity2->UpdateWorldMatrix();
-	for (auto& pLE : pointLightEntities) pLE->UpdateWorldMatrix();
+	pointLightEntity3->UpdateWorldMatrix();
+	pointLightEntity4->UpdateWorldMatrix();
+	pointLightEntity5->UpdateWorldMatrix();
+	pointLightEntity6->UpdateWorldMatrix();
+	pointLightEntity7->UpdateWorldMatrix();
+	pointLightEntity8->UpdateWorldMatrix();
+	
+	//for (auto& pLE : pointLightEntities) pLE->UpdateWorldMatrix();
 	//Switch g-buffer
 	/*if (GetAsyncKeyState('1') & 0x8000) switcher = 1;
 	if (GetAsyncKeyState('2') & 0x8000) switcher = 2;
@@ -556,8 +552,8 @@ void Game::Update(float deltaTime, float totalTime)
 
 void Game::Draw(float deltaTime, float totalTime)
 {
-	// Background color (Cornflower Blue in this case) for clearing
-	const float color[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+	// Background color for clearing
+	const float color[4] = {0.0f, 0.0f, 0.0f, 1.0f };
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
 
@@ -636,22 +632,33 @@ void Game::Draw(float deltaTime, float totalTime)
 	/**/
 //-------------------	
 
-	context->OMSetRenderTargets(1, &backBufferRTV, depthStencilView);
+	context->OMSetRenderTargets(1, &backBufferRTV, depthStencilViewDR);
 	context->RSSetViewports(1, &viewport);
 
 	context->ClearRenderTargetView(backBufferRTV, color);
-	context->ClearDepthStencilView(depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+	context->ClearDepthStencilView(depthStencilViewDR, D3D11_CLEAR_DEPTH, 1.0f, 0);
 
 	context->RSSetState(rasterizerDR);
 	float blend[4] = { 1,1,1,1 };
 	context->OMSetBlendState(blendDR, blend, 0xFFFFFFFF);
 
-	render.RenderLights(pointLightEntity, vertexBuffer, indexBuffer, lightingPassVertexShader, lightingPassPixelShader, camera, context, sampler, shaderResourceViewArray[0], shaderResourceViewArray[1], shaderResourceViewArray[2]);
+	render.RenderLights(pointLightEntity1, vertexBuffer, indexBuffer, lightingPassVertexShader, lightingPassPixelShader, camera, context, sampler, shaderResourceViewArray[0], shaderResourceViewArray[1], shaderResourceViewArray[2]);
 
 	render.RenderLights(pointLightEntity2, vertexBuffer, indexBuffer, lightingPassVertexShader, lightingPassPixelShader, camera, context, sampler, shaderResourceViewArray[0], shaderResourceViewArray[1], shaderResourceViewArray[2]);
 
-	//for (auto& pLE : pointLightEntities)
-		//render.RenderLights(pLE, vertexBuffer, indexBuffer, lightingPassVertexShader, lightingPassPixelShader, camera, context, sampler, shaderResourceViewArray[0], shaderResourceViewArray[1], shaderResourceViewArray[2]);
+	render.RenderLights(pointLightEntity3, vertexBuffer, indexBuffer, lightingPassVertexShader, lightingPassPixelShader, camera, context, sampler, shaderResourceViewArray[0], shaderResourceViewArray[1], shaderResourceViewArray[2]);
+
+	render.RenderLights(pointLightEntity4, vertexBuffer, indexBuffer, lightingPassVertexShader, lightingPassPixelShader, camera, context, sampler, shaderResourceViewArray[0], shaderResourceViewArray[1], shaderResourceViewArray[2]);
+
+	render.RenderLights(pointLightEntity5, vertexBuffer, indexBuffer, lightingPassVertexShader, lightingPassPixelShader, camera, context, sampler, shaderResourceViewArray[0], shaderResourceViewArray[1], shaderResourceViewArray[2]);
+
+	render.RenderLights(pointLightEntity6, vertexBuffer, indexBuffer, lightingPassVertexShader, lightingPassPixelShader, camera, context, sampler, shaderResourceViewArray[0], shaderResourceViewArray[1], shaderResourceViewArray[2]);
+
+	render.RenderLights(pointLightEntity7, vertexBuffer, indexBuffer, lightingPassVertexShader, lightingPassPixelShader, camera, context, sampler, shaderResourceViewArray[0], shaderResourceViewArray[1], shaderResourceViewArray[2]);
+
+	render.RenderLights(pointLightEntity8, vertexBuffer, indexBuffer, lightingPassVertexShader, lightingPassPixelShader, camera, context, sampler, shaderResourceViewArray[0], shaderResourceViewArray[1], shaderResourceViewArray[2]);
+
+	
 
 //----------------DirLightPassTry
 

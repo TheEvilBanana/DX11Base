@@ -67,8 +67,15 @@ private:
 	SimpleVertexShader* dirLightVertexShader;
 	SimplePixelShader* dirLightPixelShader;
 
-	GameEntity* pointLightEntity;
+	GameEntity* pointLightEntity1;
 	GameEntity* pointLightEntity2;
+	GameEntity* pointLightEntity3;
+	GameEntity* pointLightEntity4;
+	GameEntity* pointLightEntity5;
+	GameEntity* pointLightEntity6;
+	GameEntity* pointLightEntity7;
+	GameEntity* pointLightEntity8;
+
 	std::vector<GameEntity*> pointLightEntities;
 	// Buffers to hold actual geometry data
 	ID3D11Buffer* vertexBuffer;
