@@ -23,8 +23,9 @@ float4 main(in VertexToPixel input) : SV_TARGET
 
 	float3 diffuse = diffuseGB.Load(sampleIndices).xyz;
 
+	float3 L = -lightDir;
 
-	float lightAmountDL = saturate(dot(normal, -normalize(lightDir)));
+	float lightAmountDL = saturate(dot(normal, L));
 	float3 color = lightColor * lightAmountDL * diffuse;
 
 	return float4(color, 1.0f);

@@ -11,9 +11,14 @@ struct VertexToPixel
 VertexToPixel main(uint id : SV_VertexId)
 {
 	VertexToPixel output;
+	float2 uv = float2(
+		(id << 1) & 2,  // id % 2 * 2
+		id & 2);
 
-	float2 Tex = float2(id % 2, (id % 4) >> 1);
-	output.position = float4((Tex.x - 0.5f) * 2, -(Tex.y - 0.5f) * 2, 0, 1);
+	// Adjust the position based on the UV
+	output.position = float4(uv, 0, 1);
+	output.position.x = output.position.x * 2 - 1;
+	output.position.y = output.position.y * -2 + 1;
 
 	return output;
 }

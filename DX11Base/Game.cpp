@@ -671,9 +671,10 @@ void Game::Draw(float deltaTime, float totalTime)
 
 	
 
+
 //----------------DirLightPassTry
 
-	/*ID3D11Buffer* nothing = 0;
+	ID3D11Buffer* nothing = 0;
 	context->IASetVertexBuffers(0, 1, &nothing, &stride, &offset);
 	context->IASetIndexBuffer(0, DXGI_FORMAT_R32_UINT, 0);
 	
@@ -689,7 +690,7 @@ void Game::Draw(float deltaTime, float totalTime)
 	dirLightPixelShader->CopyAllBufferData();
 	dirLightPixelShader->SetShader();
 
-	context->Draw(4, 0);*/
+	context->Draw(3, 0);
 //-----------------
 
 //---------------

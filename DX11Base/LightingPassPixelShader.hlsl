@@ -34,20 +34,20 @@ float4 main( in VertexToPixel input) : SV_TARGET
 
 	return float4(totalColor, 1.0f);*/
 
-	float3 L = 0;
-
-	float att = 1.0f;
-
-	L = lightPos - position;
-
+	float3 L = lightPos - position;
 	float dist = length(L);
-	att = max(0, 1.0f - (dist / 2.0f));
+
+	if (dist > 2.0f)
+	{
+		return float4(0.0f, 0.0f, 0.0f, 0.0f);
+	}
 
 	L /= dist;
 
-	float nDotL = saturate(dot(normal, L));
-	float3 color = nDotL * lightColor * diffuse;
+	float att = max(0.0f, 1.0f - (dist / 2.0f));
 
-	float4 totalColor = float4(color * att, 1.0f);
+	float lightAmount = saturate(dot(normal, L));
+	float3 color = lightAmount * lightColor * att;
+	float4 totalColor = float4(color * diffuse, 1.0f);
 	return totalColor;
 }
