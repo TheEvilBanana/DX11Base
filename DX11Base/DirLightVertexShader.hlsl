@@ -8,9 +8,13 @@ struct VertexToPixel
 	float4 position		: SV_POSITION;
 };
 
-VertexToPixel main(uint id : SV_VertexId)
+// The entry point for our vertex shader
+VertexToPixel main(uint id : SV_VertexID)
 {
+	// Set up output
 	VertexToPixel output;
+
+	// Calculate the UV (0,0) to (2,2) via the ID
 	float2 uv = float2(
 		(id << 1) & 2,  // id % 2 * 2
 		id & 2);

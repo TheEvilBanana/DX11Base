@@ -25,14 +25,6 @@ float4 main( in VertexToPixel input) : SV_TARGET
 	float3 position = positionGB.Load(sampleIndices).xyz;
 
 	float3 diffuse = diffuseGB.Load(sampleIndices).xyz;
-	
-	/*float3 dirToPointLight = normalize(lightPos - position);	
-
-	float lightAmount = saturate(dot(normal, dirToPointLight));
-
-	float3 totalColor = lightAmount * lightColor * diffuse;
-
-	return float4(totalColor, 1.0f);*/
 
 	float3 L = lightPos - position;
 	float dist = length(L);
@@ -48,6 +40,15 @@ float4 main( in VertexToPixel input) : SV_TARGET
 
 	float lightAmount = saturate(dot(normal, L));
 	float3 color = lightAmount * lightColor * att;
-	float4 totalColor = float4(color * diffuse, 1.0f);
+
+	//Specular calc
+	float3 V = cameraPosition - position;
+	float3 H = normalize(L + V);
+	float specular = pow(saturate(dot(normal, H)), 10) * att;
+
+	float3 finalDiffuse = color * diffuse;
+	float3 finalSpecular = specular * diffuse * att;
+
+	float4 totalColor = float4(finalDiffuse + finalSpecular, 1.0f);
 	return totalColor;
 }

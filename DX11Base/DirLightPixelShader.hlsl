@@ -1,6 +1,3 @@
-Texture2D positionGB	: register(t0);
-Texture2D normalGB		: register(t1);
-Texture2D diffuseGB		: register(t2);
 
 cbuffer ExternalData : register(b0)
 {
@@ -8,12 +5,17 @@ cbuffer ExternalData : register(b0)
 	float3 lightDir;
 }
 
+Texture2D positionGB	: register(t0);
+Texture2D normalGB		: register(t1);
+Texture2D diffuseGB		: register(t2);
+SamplerState Sampler	: register(s0);
+
 struct VertexToPixel
 {
 	float4 position		: SV_POSITION;
 };
 
-float4 main(in VertexToPixel input) : SV_TARGET
+float4 main(VertexToPixel input) : SV_TARGET
 {
 	int3 sampleIndices = int3(input.position.xy, 0);
 

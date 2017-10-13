@@ -261,7 +261,7 @@ void Game::DeferredSetupInitialize()
 	//Setup rasterizer state 
 	D3D11_RASTERIZER_DESC rasterizerDescDR;
 	ZeroMemory(&rasterizerDescDR, sizeof(rasterizerDescDR));
-	rasterizerDescDR.CullMode = D3D11_CULL_FRONT;
+	rasterizerDescDR.CullMode = D3D11_CULL_BACK;
 	rasterizerDescDR.FillMode = D3D11_FILL_SOLID;
 	rasterizerDescDR.DepthClipEnable = false;
 	
@@ -641,7 +641,7 @@ void Game::Draw(float deltaTime, float totalTime)
 	displayPixelShader->SetShaderResourceView("Texture", 0);
 	/**/
 //-------------------	
-
+	
 	context->OMSetRenderTargets(1, &backBufferRTV, depthStencilViewDR);
 	context->RSSetViewports(1, &viewport);
 
@@ -652,6 +652,31 @@ void Game::Draw(float deltaTime, float totalTime)
 	float blend[4] = { 1,1,1,1 };
 	context->OMSetBlendState(blendDR, blend, 0xFFFFFFFF);
 	context->OMSetDepthStencilState(depthStateDR, 0);
+
+	//----------------DirLightPassTry
+
+
+
+	dirLightVertexShader->SetShader();
+
+	dirLightPixelShader->SetShaderResourceView("positionGB", shaderResourceViewArray[0]);
+	dirLightPixelShader->SetShaderResourceView("normalGB", shaderResourceViewArray[1]);
+	dirLightPixelShader->SetShaderResourceView("diffuseGB", shaderResourceViewArray[2]);
+	displayPixelShader->SetSamplerState("Sampler", sampler);
+
+	dirLightPixelShader->SetFloat3("lightColor", XMFLOAT3(0.5f, 0.5f, 0.5f));
+	dirLightPixelShader->SetFloat3("lightDir", XMFLOAT3(10.0f, -10.0f, 0.0f));
+
+	dirLightPixelShader->CopyAllBufferData();
+	dirLightPixelShader->SetShader();
+
+	ID3D11Buffer* nothing = 0;
+	context->IASetVertexBuffers(0, 1, &nothing, &stride, &offset);
+	context->IASetIndexBuffer(0, DXGI_FORMAT_R32_UINT, 0);
+
+	context->Draw(3, 0);
+	//-----------------
+
 
 	render.RenderLights(pointLightEntity1, vertexBuffer, indexBuffer, lightingPassVertexShader, lightingPassPixelShader, camera, context, sampler, shaderResourceViewArray[0], shaderResourceViewArray[1], shaderResourceViewArray[2]);
 
@@ -669,29 +694,6 @@ void Game::Draw(float deltaTime, float totalTime)
 
 	render.RenderLights(pointLightEntity8, vertexBuffer, indexBuffer, lightingPassVertexShader, lightingPassPixelShader, camera, context, sampler, shaderResourceViewArray[0], shaderResourceViewArray[1], shaderResourceViewArray[2]);
 
-	
-
-
-//----------------DirLightPassTry
-
-	ID3D11Buffer* nothing = 0;
-	context->IASetVertexBuffers(0, 1, &nothing, &stride, &offset);
-	context->IASetIndexBuffer(0, DXGI_FORMAT_R32_UINT, 0);
-	
-	dirLightVertexShader->SetShader();
-
-	dirLightPixelShader->SetShaderResourceView("positionGB", shaderResourceViewArray[0]);
-	dirLightPixelShader->SetShaderResourceView("normalGB", shaderResourceViewArray[1]);
-	dirLightPixelShader->SetShaderResourceView("diffuseGB", shaderResourceViewArray[2]);
-
-	dirLightPixelShader->SetFloat3("lightColor", XMFLOAT3(1.0f, 1.0f, 1.0f));
-	dirLightPixelShader->SetFloat3("lightDir", XMFLOAT3(10.0f, 0.0f, 0.0f));
-
-	dirLightPixelShader->CopyAllBufferData();
-	dirLightPixelShader->SetShader();
-
-	context->Draw(3, 0);
-//-----------------
 
 //---------------
 	context->RSSetState(NULL);
